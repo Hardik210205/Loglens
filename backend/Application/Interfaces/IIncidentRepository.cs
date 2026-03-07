@@ -1,0 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using LogLens.Domain.Entities;
+
+namespace LogLens.Application.Interfaces
+{
+    public interface IIncidentRepository
+    {
+        Task AddAsync(Incident incident, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Incident>> GetRecentAsync(DateTime since, CancellationToken cancellationToken = default);
+    }
+}

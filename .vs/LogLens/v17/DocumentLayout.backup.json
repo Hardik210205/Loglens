@@ -1,0 +1,85 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\.NET_Project\\Loglens\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|d:\\.net_project\\loglens\\backend\\api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|solutionrelative:backend\\api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|d:\\.net_project\\loglens\\backend\\api\\middleware\\exceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|solutionrelative:backend\\api\\middleware\\exceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|d:\\.net_project\\loglens\\backend\\api\\extensions\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|solutionrelative:backend\\api\\extensions\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|d:\\.net_project\\loglens\\backend\\api\\endpoints\\logendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{00000000-0000-0000-0000-000000000003}|backend\\API\\LogLens.API.csproj|solutionrelative:backend\\api\\endpoints\\logendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\.NET_Project\\Loglens\\backend\\API\\Program.cs",
+              "RelativeDocumentMoniker": "backend\\API\\Program.cs",
+              "ToolTip": "D:\\.NET_Project\\Loglens\\backend\\API\\Program.cs",
+              "RelativeToolTip": "backend\\API\\Program.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAAAAABYAAABbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-03T16:53:17.667Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ExceptionMiddleware.cs",
+              "DocumentMoniker": "D:\\.NET_Project\\Loglens\\backend\\API\\Middleware\\ExceptionMiddleware.cs",
+              "RelativeDocumentMoniker": "backend\\API\\Middleware\\ExceptionMiddleware.cs",
+              "ToolTip": "D:\\.NET_Project\\Loglens\\backend\\API\\Middleware\\ExceptionMiddleware.cs",
+              "RelativeToolTip": "backend\\API\\Middleware\\ExceptionMiddleware.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-03T16:53:14.584Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ServiceCollectionExtensions.cs",
+              "DocumentMoniker": "D:\\.NET_Project\\Loglens\\backend\\API\\Extensions\\ServiceCollectionExtensions.cs",
+              "RelativeDocumentMoniker": "backend\\API\\Extensions\\ServiceCollectionExtensions.cs",
+              "ToolTip": "D:\\.NET_Project\\Loglens\\backend\\API\\Extensions\\ServiceCollectionExtensions.cs",
+              "RelativeToolTip": "backend\\API\\Extensions\\ServiceCollectionExtensions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-03T16:52:54.804Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "LogEndpoints.cs",
+              "DocumentMoniker": "D:\\.NET_Project\\Loglens\\backend\\API\\Endpoints\\LogEndpoints.cs",
+              "RelativeDocumentMoniker": "backend\\API\\Endpoints\\LogEndpoints.cs",
+              "ToolTip": "D:\\.NET_Project\\Loglens\\backend\\API\\Endpoints\\LogEndpoints.cs",
+              "RelativeToolTip": "backend\\API\\Endpoints\\LogEndpoints.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-03T16:53:02.431Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

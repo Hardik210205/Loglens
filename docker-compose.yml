@@ -1,0 +1,81 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: loglens-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: loglens
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loglens-network
+
+  # API Service (ASP.NET Core)
+  api:
+    build:
+      context: ./backend
+      dockerfile: API/Dockerfile
+    container_name: loglens-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=loglens;Username=postgres;Password=postgres"
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - loglens-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend/UI
+      dockerfile: Dockerfile
+    container_name: loglens-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - loglens-network
+    environment:
+      REACT_APP_API_BASE_URL: http://api:8080
+      REACT_APP_SIGNALR_URL: http://localhost:5000
+
+  # Optional: Nginx Reverse Proxy for production-like setup
+  nginx:
+    image: nginx:alpine
+    container_name: loglens-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - loglens-network
+    working_dir: /app
+
+volumes:
+  postgres_data:
+
+networks:
+  loglens-network:
+    driver: bridge

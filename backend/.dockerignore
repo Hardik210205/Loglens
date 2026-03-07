@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/.git/
+**/.vscode/
+**/packages/
+**/*.log
+**/TestResults/
+**/coverage/
+**/.DS_Store
