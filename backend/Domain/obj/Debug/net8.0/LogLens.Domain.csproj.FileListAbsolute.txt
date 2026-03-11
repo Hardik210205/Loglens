@@ -9,3 +9,4 @@ D:\.NET_Project\Loglens\backend\Domain\obj\Debug\net8.0\LogLens.Domain.dll
 D:\.NET_Project\Loglens\backend\Domain\obj\Debug\net8.0\refint\LogLens.Domain.dll
 D:\.NET_Project\Loglens\backend\Domain\obj\Debug\net8.0\LogLens.Domain.pdb
 D:\.NET_Project\Loglens\backend\Domain\obj\Debug\net8.0\ref\LogLens.Domain.dll
+D:\.NET_Project\Loglens\backend\Domain\obj\Debug\net8.0\LogLens.Domain.sourcelink.json

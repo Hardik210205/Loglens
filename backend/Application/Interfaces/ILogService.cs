@@ -5,6 +5,6 @@ namespace LogLens.Application.Interfaces
 {
     public interface ILogService
     {
-        Task EnqueueAsync(LogDto log);
+        Task EnqueueAsync(IngestLogRequest log);
     }
 }

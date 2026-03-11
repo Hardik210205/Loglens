@@ -13,3 +13,4 @@ D:\.NET_Project\Loglens\backend\ML\obj\Debug\net8.0\LogLens.ML.dll
 D:\.NET_Project\Loglens\backend\ML\obj\Debug\net8.0\refint\LogLens.ML.dll
 D:\.NET_Project\Loglens\backend\ML\obj\Debug\net8.0\LogLens.ML.pdb
 D:\.NET_Project\Loglens\backend\ML\obj\Debug\net8.0\ref\LogLens.ML.dll
+D:\.NET_Project\Loglens\backend\ML\obj\Debug\net8.0\LogLens.ML.sourcelink.json

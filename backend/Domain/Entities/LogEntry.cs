@@ -10,5 +10,7 @@ namespace LogLens.Domain.Entities
         public LogLevel Level { get; set; }
         public string Message { get; set; } = string.Empty;
         public string? Metadata { get; set; }
+        public string ServiceName { get; set; } = string.Empty;
+        public string? TraceId { get; set; }
     }
 }

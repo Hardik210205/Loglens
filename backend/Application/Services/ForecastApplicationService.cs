@@ -81,11 +81,11 @@ namespace LogLens.Application.Services
             return Task.FromResult(mlAlerts);
         }
 
-        public Task<double> GetForecastAccuracyAsync()
+        public async Task<double> GetForecastAccuracyAsync()
         {
-            // Return a baseline accuracy metric
-            // In production, this would be calculated from validation data
-            return Task.FromResult(0.80); // 80% accuracy
+            var logs = (await _logRepository.GetLogsSinceAsync(DateTime.UtcNow.AddDays(-7))).ToList();
+            var accuracy = _mlService.ComputeForecastAccuracy(logs);
+            return Math.Round(accuracy, 2);
         }
     }
 }

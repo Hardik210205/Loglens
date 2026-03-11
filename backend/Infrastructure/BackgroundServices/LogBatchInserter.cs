@@ -105,8 +105,8 @@ namespace LogLens.Infrastructure.BackgroundServices
                 // Get IHubContext<LogHub> dynamically
                 if (_hubContext == null)
                 {
-                    // Get IHubContext type dynamically
-                    var iHubContextTypeName = "Microsoft.AspNetCore.SignalR.IHubContext`1, Microsoft.AspNetCore.SignalR";
+                    // Get IHubContext type dynamically. In ASP.NET Core 8/9 the type lives in Microsoft.AspNetCore.SignalR.Core.
+                    var iHubContextTypeName = "Microsoft.AspNetCore.SignalR.IHubContext`1, Microsoft.AspNetCore.SignalR.Core";
                     var iHubContextBaseType = Type.GetType(iHubContextTypeName);
                     if (iHubContextBaseType == null)
                     {

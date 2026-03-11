@@ -15,3 +15,4 @@ D:\.NET_Project\Loglens\backend\Application\obj\Debug\net8.0\LogLens.Application
 D:\.NET_Project\Loglens\backend\Application\obj\Debug\net8.0\refint\LogLens.Application.dll
 D:\.NET_Project\Loglens\backend\Application\obj\Debug\net8.0\LogLens.Application.pdb
 D:\.NET_Project\Loglens\backend\Application\obj\Debug\net8.0\ref\LogLens.Application.dll
+D:\.NET_Project\Loglens\backend\Application\obj\Debug\net8.0\LogLens.Application.sourcelink.json

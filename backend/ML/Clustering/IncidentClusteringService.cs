@@ -78,6 +78,68 @@ namespace LogLens.ML.Clustering
         }
 
         /// <summary>
+        /// Computes clustering quality (0-1) using explained variance ratio.
+        /// Higher values indicate better-defined, more separated clusters.
+        /// </summary>
+        public double ComputeClusteringQuality(List<LogEntry> logs)
+        {
+            if (logs == null || logs.Count < 2)
+                return 0.5; // Neutral when insufficient data
+
+            try
+            {
+                var clusterAssignments = ClusterLogs(logs);
+                var features = logs.Select(log => new[]
+                {
+                    (float)ConvertLogLevelToScore(log.Level),
+                    (float)log.Message.Length,
+                    (float)(log.Timestamp.Ticks % 1000000),
+                    (float)(log.Metadata?.Length ?? 0)
+                }).ToList();
+
+                var n = features.Count;
+                var globalMean = new float[4];
+                for (int i = 0; i < 4; i++)
+                    globalMean[i] = features.Average(f => f[i]);
+
+                var clusters = logs
+                    .Select((log, i) => (LogId: log.Id, Index: i))
+                    .GroupBy(x => clusterAssignments.TryGetValue(x.LogId, out var c) ? c : 0)
+                    .Where(g => g.Count() > 0)
+                    .ToList();
+
+                double wcss = 0; // Within-cluster sum of squares
+                double tss = 0;  // Total sum of squares
+
+                foreach (var point in features.Select((f, i) => (Features: f, Index: i)))
+                {
+                    for (int j = 0; j < 4; j++)
+                        tss += Math.Pow(point.Features[j] - globalMean[j], 2);
+                }
+
+                foreach (var cluster in clusters)
+                {
+                    var indices = cluster.Select(x => x.Index).ToList();
+                    var centroid = new float[4];
+                    for (int j = 0; j < 4; j++)
+                        centroid[j] = indices.Average(i => features[i][j]);
+
+                    foreach (var idx in indices)
+                        for (int j = 0; j < 4; j++)
+                            wcss += Math.Pow(features[idx][j] - centroid[j], 2);
+                }
+
+                if (tss < 1e-10) return 0.5;
+                var explainedVariance = 1.0 - (wcss / tss);
+                return Math.Clamp(explainedVariance, 0, 1);
+            }
+            catch
+            {
+                return 0.5;
+            }
+        }
+
+        /// <summary>
         /// Tries to detect if logs represent the same incident by comparing features.
         /// Used to merge clusters and group into incidents.
         /// </summary>

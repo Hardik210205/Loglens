@@ -152,3 +152,4 @@ D:\.NET_Project\Loglens\backend\API\obj\Debug\net9.0\refint\LogLens.API.dll
 D:\.NET_Project\Loglens\backend\API\obj\Debug\net9.0\LogLens.API.pdb
 D:\.NET_Project\Loglens\backend\API\obj\Debug\net9.0\LogLens.API.genruntimeconfig.cache
 D:\.NET_Project\Loglens\backend\API\obj\Debug\net9.0\ref\LogLens.API.dll
+D:\.NET_Project\Loglens\backend\API\obj\Debug\net9.0\LogLens.API.sourcelink.json

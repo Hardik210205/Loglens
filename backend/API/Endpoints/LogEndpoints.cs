@@ -11,7 +11,8 @@ namespace LogLens.API.Endpoints
     {
         public static void MapLogEndpoints(this WebApplication app)
         {
-            app.MapPost("/api/logs", async (LogDto log, ILogService logService) =>
+            // Ingestion endpoint used by external services
+            app.MapPost("/api/logs", async (IngestLogRequest log, ILogService logService) =>
             {
                 await logService.EnqueueAsync(log);
                 return Results.Accepted();
@@ -88,15 +89,19 @@ namespace LogLens.API.Endpoints
 
             app.MapGet("/api/stats/ai", async (
                 IIncidentRepository incidentRepo,
-                IForecastRepository forecastRepo) =>
+                IForecastRepository forecastRepo,
+                IIncidentClusteringService clusteringService,
+                IForecastService forecastService) =>
             {
                 var since = DateTime.UtcNow.AddHours(-24);
                 var incidents = await incidentRepo.GetRecentAsync(since);
                 var incidentCount = incidents.Count();
                 var forecastCount = await forecastRepo.GetCountSinceAsync(since);
+                var clusteringAccuracy = (int)(await clusteringService.GetClusteringAccuracyAsync() * 100);
+                var forecastingAccuracy = (int)(await forecastService.GetForecastAccuracyAsync() * 100);
                 var dto = new AIStatusDto(
-                    ClusteringAccuracy: 82,
-                    ForecastingAccuracy: 80,
+                    ClusteringAccuracy: clusteringAccuracy,
+                    ForecastingAccuracy: forecastingAccuracy,
                     IncidentsDetected: incidentCount,
                     ForecastsGenerated: forecastCount,
                     LastUpdate: DateTime.UtcNow

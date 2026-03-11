@@ -56,6 +56,53 @@ namespace LogLens.ML.Forecasting
         }
 
         /// <summary>
+        /// Computes forecast accuracy (0-1) by backtesting: trains on historical data,
+        /// predicts held-out period, and compares with actuals using symmetric MAPE.
+        /// </summary>
+        public double ComputeForecastAccuracy(List<LogEntry> logs)
+        {
+            if (logs == null || logs.Count < 20)
+                return 0.5; // Neutral when insufficient data
+
+            try
+            {
+                var hourlyWarnings = AggregateWarningsByHour(logs);
+                var data = hourlyWarnings.OrderBy(x => x.Key).ToList();
+
+                if (data.Count < 24)
+                    return 0.5;
+
+                // Hold out last 24 hours for validation
+                var trainData = data.Take(data.Count - 24).ToList();
+                var actuals = data.Skip(data.Count - 24).Select(x => (double)x.Value).ToArray();
+
+                var trainValues = trainData.Select(x => (double)x.Value).ToArray();
+                var forecasts = SimpleExponentialSmoothing(trainValues, 24);
+
+                if (forecasts.Count != actuals.Length)
+                    return 0.5;
+
+                // Symmetric MAPE: 2 * |actual - pred| / (|actual| + |pred| + 1e-6)
+                double sumSmape = 0;
+                int count = 0;
+                for (int i = 0; i < actuals.Length; i++)
+                {
+                    var a = actuals[i];
+                    var p = Math.Max(0, forecasts[i]);
+                    var denom = Math.Abs(a) + Math.Abs(p) + 1e-6;
+                    sumSmape += 2 * Math.Abs(a - p) / denom;
+                    count++;
+                }
+                var smape = count > 0 ? sumSmape / count : 1;
+                return Math.Clamp(1 - smape, 0, 1);
+            }
+            catch
+            {
+                return 0.5;
+            }
+        }
+
+        /// <summary>
         /// Calculates if a forecast indicates potential incident (predicted value > threshold)
         /// and generates alerts accordingly.
         /// </summary>

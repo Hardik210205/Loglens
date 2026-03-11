@@ -13,11 +13,13 @@ namespace LogLens.Application.Services
     {
         private readonly IncidentClusteringService _mlService;
         private readonly IIncidentRepository _incidentRepository;
+        private readonly ILogRepository _logRepository;
 
-        public IncidentClusteringApplicationService(IIncidentRepository incidentRepository)
+        public IncidentClusteringApplicationService(IIncidentRepository incidentRepository, ILogRepository logRepository)
         {
             _mlService = new IncidentClusteringService();
             _incidentRepository = incidentRepository;
+            _logRepository = logRepository;
         }
 
         public async Task<List<Incident>> AnalyzeAndCreateIncidentsAsync(List<LogEntry> logs)
@@ -51,11 +53,11 @@ namespace LogLens.Application.Services
             return incidents;
         }
 
-        public Task<double> GetClusteringAccuracyAsync()
+        public async Task<double> GetClusteringAccuracyAsync()
         {
-            // Return a baseline accuracy metric
-            // In production, this would be calculated from test data
-            return Task.FromResult(0.82); // 82% accuracy
+            var logs = (await _logRepository.GetLogsSinceAsync(DateTime.UtcNow.AddDays(-7))).ToList();
+            var quality = _mlService.ComputeClusteringQuality(logs);
+            return Math.Round(quality, 2);
         }
 
         private SeverityLevel DetermineMaxSeverity(List<LogEntry> logs)

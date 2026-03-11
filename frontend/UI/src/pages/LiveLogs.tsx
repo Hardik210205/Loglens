@@ -64,14 +64,15 @@ const LiveLogs: React.FC = () => {
     let filtered = logs;
 
     if (filters.searchText) {
+      const term = filters.searchText.toLowerCase();
       filtered = filtered.filter((log) =>
-        log.Message?.toLowerCase().includes(filters.searchText.toLowerCase()) ||
-        log.Metadata?.toLowerCase().includes(filters.searchText.toLowerCase())
+        log.message?.toLowerCase().includes(term) ||
+        log.metadata?.toLowerCase().includes(term)
       );
     }
 
     if (filters.logLevel !== 'All') {
-      filtered = filtered.filter((log) => log.Level === filters.logLevel);
+      filtered = filtered.filter((log) => log.level === filters.logLevel);
     }
 
     setFilteredLogs(filtered);
