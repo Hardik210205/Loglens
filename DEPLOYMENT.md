@@ -22,13 +22,13 @@ dotnet ef database update  # if needed (requires PostgreSQL running)
 dotnet run
 
 # Terminal 2: Frontend
-cd frontend/UI
+cd frontend
 npm install
 npm run dev
 ```
 
 **Access points:**
-- **Frontend:** http://localhost:5173
+- **Frontend:** http://localhost:3000
 - **API:** http://localhost:5000
 - **Swagger:** http://localhost:5000/swagger
 - **Health:** http://localhost:5000/health
@@ -47,7 +47,7 @@ curl -X POST http://localhost:5000/api/logs -H "Content-Type: application/json" 
 # Expected: 202 Accepted
 
 # 3. View Dashboard
-# Open http://localhost:5173 in browser (Vite dev server)
+# Open http://localhost:3000 in browser (Vite dev server)
 # Should see live logs appearing in real-time
 ```
 
@@ -158,7 +158,7 @@ GET /swagger/index.html
 
 ### SignalR Real-Time
 ```
-ws://localhost:5000/hubs/logs
+ws://localhost:5000/loghub
 Events: ReceiveLogs, ReceiveAlerts, ReceiveIncidents
 ```
 
@@ -205,7 +205,7 @@ Default credentials in development:
 
 - **[API Documentation](http://localhost:5000/swagger)** - Interactive Swagger UI
 - **[Health Check](http://localhost:5000/health)** - System status
-- **[Frontend](frontend/UI/README.md)** - React setup details
+- **[Frontend](frontend/README.md)** - React setup details
 - **[Backend](backend/README.md)** - .NET architecture details
 
 ## ✨ What's Included
@@ -270,7 +270,7 @@ fetch('http://localhost:5000/api/logs', {
 If encountering issues:
 1. Check terminal logs for backend and frontend errors
 2. Ensure PostgreSQL is running and connection string in `appsettings.json` is correct
-3. Ensure ports are available (5000 for API, 5173 for Vite dev server, 5432 for PostgreSQL)
+3. Ensure ports are available (5000 for API, 3000 for Vite dev server, 5432 for PostgreSQL)
 4. Review browser console (F12) for frontend errors
 
 ---

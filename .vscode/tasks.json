@@ -6,7 +6,9 @@
       "type": "shell",
       "command": "npm",
       "args": ["install"],
-      "cwd": "${workspaceFolder}/frontend/UI",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "problemMatcher": []
     },
     {
@@ -14,7 +16,9 @@
       "type": "shell",
       "command": "npm",
       "args": ["run", "dev"],
-      "cwd": "${workspaceFolder}/frontend/UI",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "isBackground": true,
       "problemMatcher": {
         "pattern": {

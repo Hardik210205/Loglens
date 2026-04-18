@@ -12,8 +12,7 @@ Loglens/
 │   ├── Domain/           (Entities, enums)
 │   ├── Infrastructure/   (EF Core, repositories, background services)
 │   └── ML/               (Machine learning models)
-├── frontend/
-│   └── UI/               (React + TypeScript + Vite)
+├── frontend/             (React + TypeScript + Vite)
 ├── LogLens.sln           (Visual Studio Solution)
 └── .vscode/
     └── tasks.json        (VS Code task runners)
@@ -47,19 +46,19 @@ Loglens/
 ### Step 3: Frontend Setup
 
 #### Option A: Run from VS Code (Recommended for development)
-1. Open a new terminal at `d:\.NET_Project\Loglens\frontend\UI`
+1. Open a new terminal at `d:\.NET_Project\Loglens\frontend`
 2. Run:
    ```bash
    npm install
    npm run dev
    ```
-3. Frontend will start on `http://localhost:3001`
+3. Frontend will start on `http://localhost:3000`
 
 #### Option B: Run from Visual Studio Terminal
 1. In VS, open **View** → **Terminal** (Ctrl + `)
 2. Navigate to frontend folder:
    ```bash
-   cd frontend\UI
+  cd frontend
    npm install
    npm run dev
    ```
@@ -67,8 +66,8 @@ Loglens/
 ### Step 4: Access the App
 
 - **Backend API**: `http://localhost:5000/health`
-- **Frontend**: `http://localhost:3001`
-- **SignalR Hub**: `http://localhost:5000/hubs/logs`
+- **Frontend**: `http://localhost:3000`
+- **SignalR Hub**: `http://localhost:5000/loghub`
 
 ## Configuration
 
@@ -108,7 +107,7 @@ To run both frontend and backend from one place:
 
 This will start:
 - Backend API on port 5000
-- Frontend dev server on port 3001
+- Frontend dev server on port 3000
 
 ## API Endpoints
 
@@ -120,7 +119,7 @@ This will start:
 - `GET /health` - Health check
 
 ### SignalR
-- WebSocket at `/hubs/logs`
+- WebSocket at `/loghub`
 - Event: `ReceiveLogs` - broadcasts new logs to connected clients
 
 ## Database Setup (PostgreSQL)
@@ -151,22 +150,22 @@ dotnet publish -c Release -o ./publish
 
 ### Frontend
 ```bash
-cd frontend/UI
+cd frontend
 npm run build
 ```
 
-Output goes to `frontend/UI/dist/` — can be served by backend static files.
+Output goes to `frontend/dist/` — can be served by backend static files.
 
 ## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
 | Port 5000 already in use | Change in `Properties/launchSettings.json` |
-| Port 3001 already in use | Vite auto-increments to 3002, 3003, etc. |
+| Port 3000 already in use | Vite auto-increments to 3001, 3002, etc. |
 | SignalR connection fails | Ensure backend is running; check `Program.cs` hub mapping |
 | Database connection fails | Verify PostgreSQL is running; check connection string |
 | Frontend blank page | Open browser DevTools Console (F12); check for errors |
-| npm modules not found | Run `npm install` in `frontend/UI` folder |
+| npm modules not found | Run `npm install` in `frontend` folder |
 
 ## Next Steps
 
@@ -179,5 +178,5 @@ Output goes to `frontend/UI/dist/` — can be served by backend static files.
 ## Documentation
 
 - Backend: See `backend/README.md`
-- Frontend: See `frontend/UI/README.md`
+- Frontend: See `frontend/README.md`
 - API: Available at `http://localhost:5000/swagger` (if Swagger is added)
