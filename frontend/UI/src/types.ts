@@ -1,3 +1,5 @@
+export type LogLevel = "Info" | "Warning" | "Error" | "Debug";
+
 export interface LogEntry {
   id: string;
   timestamp: string;

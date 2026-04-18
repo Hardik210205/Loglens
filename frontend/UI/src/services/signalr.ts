@@ -5,7 +5,7 @@ let connection: HubConnection | null = null;
 export const createLogHubConnection = (): HubConnection => {
   if (!connection) {
     connection = new HubConnectionBuilder()
-      .withUrl('/hubs/logs')
+      .withUrl('/loghub')
       .withAutomaticReconnect()
       .build();
   }

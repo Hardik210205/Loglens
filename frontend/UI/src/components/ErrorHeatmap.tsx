@@ -26,7 +26,11 @@ const ErrorHeatmap: React.FC = () => {
       }
     };
     load();
-    return () => { mounted = false; };
+    const timer = setInterval(load, 5000);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
   }, []);
 
   if (loading) return <div>Loading heatmap...</div>;

@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { fetchIncidents } from '../services/api';
+import { fetchIncidents, fetchSystemRisk, formatUtcTimestamp, IncidentDto } from '../services/api';
 
 interface Incident {
   id: string;
-  startTime: string;
-  endTime: string | null;
-  description: string;
-  severity: 'Critical' | 'Major' | 'Minor' | 'Low';
-  logCount: number;
+  startTimeUtc: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  template: string;
+  serviceName: string;
+  errorCount: number;
+  warningCount: number;
+  firstSeen: string;
+  lastSeen: string;
+  suggestedCause: string;
+  status: 'Active' | 'Resolved';
 }
 
 const IncidentExplorer: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [riskScore, setRiskScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,45 +26,59 @@ const IncidentExplorer: React.FC = () => {
     let mounted = true;
     const load = async () => {
       try {
-        const data = await fetchIncidents();
+        const [incidentData, riskData] = await Promise.all([
+          fetchIncidents(),
+          fetchSystemRisk()
+        ]);
+
         if (mounted) {
-          setIncidents(data.map((i: { id: string; startTime: string; endTime: string | null; description: string; severity: string; logCount: number }) => ({
+          const mapped = incidentData.map((i: IncidentDto) => ({
             id: i.id,
-            startTime: i.startTime,
-            endTime: i.endTime,
-            description: i.description,
-            severity: i.severity as Incident['severity'],
-            logCount: i.logCount,
-          })));
+            startTimeUtc: i.startTimeUtc,
+            severity: i.severity,
+            title: i.title,
+            template: i.template,
+            serviceName: i.serviceName,
+            errorCount: i.errorCount,
+            warningCount: i.warningCount,
+            firstSeen: i.firstSeen,
+            lastSeen: i.lastSeen,
+            suggestedCause: i.suggestedCause,
+            status: i.status.toLowerCase() === 'resolved' ? 'Resolved' : 'Active',
+          }));
+
+          setIncidents(mapped);
+          setRiskScore(riskData.score);
+          setError(null);
         }
       } catch (e) {
-        if (mounted) setError(e instanceof Error ? e.message : 'Failed to load incidents');
-        setIncidents([]);
+        if (mounted) {
+          setError(e instanceof Error ? e.message : 'Failed to load incidents');
+          setIncidents([]);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
     };
+
     load();
-    return () => { mounted = false; };
+    const timer = setInterval(load, 5000);
+
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
   }, []);
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'Critical':
-        return '#ef4444';
-      case 'Major':
-        return '#f97316';
-      case 'Minor':
-        return '#eab308';
-      case 'Low':
-        return '#3b82f6';
-      default:
-        return '#6b7280';
-    }
+  const getSeverityColor = (severity: Incident['severity']) => {
+    if (severity === 'critical') return '#dc2626';
+    if (severity === 'high') return '#f97316';
+    if (severity === 'medium') return '#f59e0b';
+    return '#22c55e';
   };
 
-  const getStatusBadge = (endTime: string | null) => {
-    if (endTime) {
+  const getStatusBadge = (status: Incident['status']) => {
+    if (status === 'Resolved') {
       return (
         <span style={{
           display: 'inline-block',
@@ -68,7 +89,7 @@ const IncidentExplorer: React.FC = () => {
           fontSize: '0.875rem',
           fontWeight: '500'
         }}>
-          ✓ Resolved
+          Resolved
         </span>
       );
     }
@@ -82,7 +103,7 @@ const IncidentExplorer: React.FC = () => {
         fontSize: '0.875rem',
         fontWeight: '500'
       }}>
-        ⚠ Active
+        Active
       </span>
     );
   };
@@ -100,6 +121,20 @@ const IncidentExplorer: React.FC = () => {
   return (
     <div>
       <h2>Incident Explorer</h2>
+
+      {riskScore != null && riskScore > 70 && incidents.length === 0 && (
+        <div style={{
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1rem',
+          borderLeft: '4px solid #f97316',
+          backgroundColor: '#fff7ed',
+          color: '#9a3412'
+        }}>
+          Risk is currently {riskScore}% but no incident has been recorded yet. Monitor system behavior closely.
+        </div>
+      )}
+
       <div style={{
         padding: '1rem',
         backgroundColor: '#f0f9ff',
@@ -109,6 +144,20 @@ const IncidentExplorer: React.FC = () => {
       }}>
         Found {incidents.length} incidents in the last 24 hours
       </div>
+
+      {incidents.length === 0 && (
+        <div style={{
+          padding: '2rem',
+          textAlign: 'center',
+          color: '#166534',
+          backgroundColor: '#f0fdf4',
+          borderRadius: '8px',
+          border: '1px solid #bbf7d0'
+        }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.35rem' }}>System Healthy</div>
+          <div>No incidents detected in the last 24 hours.</div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gap: '1rem' }}>
         {incidents.map((incident) => (
@@ -130,20 +179,37 @@ const IncidentExplorer: React.FC = () => {
                       width: '12px',
                       height: '12px',
                       borderRadius: '50%',
-                      backgroundColor: getSeverityColor(incident.severity)
+                      backgroundColor: incident.status === 'Active' ? '#ef4444' : '#6b7280'
                     }}
                   />
-                  <h3 style={{ margin: 0 }}>{incident.description}</h3>
-                  {getStatusBadge(incident.endTime)}
+                  <h3 style={{ margin: 0 }}>{incident.title}</h3>
+                  {getStatusBadge(incident.status)}
+                  <span style={{
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '999px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    textTransform: 'capitalize'
+                  }}>
+                    {incident.severity}
+                  </span>
                 </div>
-                <div style={{ color: '#666', fontSize: '0.875rem' }}>
-                  Started: {new Date(incident.startTime).toLocaleString()}
-                  {incident.endTime && (
-                    <>
-                      {' · '}
-                      Ended: {new Date(incident.endTime).toLocaleString()}
-                    </>
-                  )}
+                <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.4rem' }}>
+                  Service: {incident.serviceName}
+                </div>
+                <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.4rem' }}>
+                  Start Time: {formatUtcTimestamp(incident.startTimeUtc)}
+                </div>
+                <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.4rem' }}>
+                  First Seen: {formatUtcTimestamp(incident.firstSeen)} · Last Seen: {formatUtcTimestamp(incident.lastSeen)}
+                </div>
+                <div style={{ color: '#111827', fontSize: '0.88rem', marginBottom: '0.4rem' }}>
+                  Suggested Cause: {incident.suggestedCause || 'No cause suggestion available.'}
+                </div>
+                <div style={{ color: '#6b7280', fontSize: '0.82rem' }}>
+                  Template: {incident.template}
                 </div>
               </div>
               <div
@@ -155,23 +221,15 @@ const IncidentExplorer: React.FC = () => {
                   minWidth: '80px'
                 }}
               >
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>Logs</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{incident.logCount}</div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>Errors</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#b91c1c' }}>{incident.errorCount}</div>
+                <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.35rem' }}>Warnings</div>
+                <div style={{ fontSize: '1rem', fontWeight: 600, color: '#c2410c' }}>{incident.warningCount}</div>
               </div>
             </div>
           </div>
         ))}
       </div>
-
-      {incidents.length === 0 && (
-        <div style={{
-          padding: '2rem',
-          textAlign: 'center',
-          color: '#999'
-        }}>
-          No incidents detected in the last 24 hours. System is healthy! ✨
-        </div>
-      )}
     </div>
   );
 };

@@ -1,6 +1,8 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import ErrorHeatmap from '../components/ErrorHeatmap';
-import AIStatusPanel from '../components/AIStatusPanel';
+import SystemRiskPanel from '../components/SystemRiskPanel';
+import TopFailingServices from '../components/TopFailingServices';
+import PredictionChartPlaceholder from '../components/PredictionChartPlaceholder';
 import { fetchDashboardStats } from '../services/api';
 
 const Dashboard: React.FC = () => {
@@ -21,15 +23,21 @@ const Dashboard: React.FC = () => {
       }
     };
     load();
-    const timer = setInterval(load, 15000);
+    const timer = setInterval(load, 5000);
     return () => { clearInterval(timer); mounted = false; };
   }, []);
 
   return (
     <div>
       <h2>Dashboard</h2>
-      <Suspense fallback={<div>Loading AI status...</div>}>
-        <AIStatusPanel />
+      <Suspense fallback={<div>Loading system risk...</div>}>
+        <SystemRiskPanel />
+      </Suspense>
+      <Suspense fallback={<div>Loading failing services...</div>}>
+        <TopFailingServices />
+      </Suspense>
+      <Suspense fallback={<div>Loading prediction chart...</div>}>
+        <PredictionChartPlaceholder />
       </Suspense>
       <Suspense fallback={<div>Loading heatmap...</div>}>
         <ErrorHeatmap />
@@ -43,6 +51,9 @@ const Dashboard: React.FC = () => {
         <h3>Quick Stats</h3>
         {statsError && (
           <div style={{ color: '#ef4444', marginBottom: '1rem' }}>{statsError}</div>
+        )}
+        {!statsError && stats == null && (
+          <div style={{ color: '#6b7280', marginBottom: '1rem' }}>No dashboard data available yet.</div>
         )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
           <div>

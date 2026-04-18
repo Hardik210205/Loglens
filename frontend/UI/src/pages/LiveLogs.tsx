@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { HubConnectionState } from '@microsoft/signalr';
 import LogTable from '../components/LogTable';
 import LogSearchFilters, { LogFilters } from '../components/LogSearchFilters';
 import { LogEntry } from '../types';
 import { fetchLogs } from '../services/api';
+import { createLogHubConnection } from '../services/signalr';
 
 const LiveLogs: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -19,7 +21,7 @@ const LiveLogs: React.FC = () => {
     let mounted = true;
     const loadInitial = async () => {
       try {
-        const existing = await fetchLogs(1000);
+        const existing = await fetchLogs(100);
         if (mounted) setLogs(existing as LogEntry[]);
       } catch (e) {
         if (mounted) setError(prev => prev || (e instanceof Error ? e.message : 'Failed to load logs'));
@@ -30,33 +32,27 @@ const LiveLogs: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    try {
-      import('@microsoft/signalr').then(({ HubConnectionBuilder }) => {
-        const connection = new HubConnectionBuilder()
-          .withUrl('/hubs/logs')
-          .withAutomaticReconnect()
-          .build();
+    const connection = createLogHubConnection();
 
-        connection.on('ReceiveLogs', (newLogs: LogEntry[]) => {
-          setLogs((prev) => [...newLogs, ...prev].slice(0, 1000)); // Keep last 1000 logs
-        });
+    const handleReceiveLogs = (newLogs: LogEntry[]) => {
+      setLogs((prev) => [...newLogs, ...prev].slice(0, 100));
+    };
 
-        connection.start().catch((err) => {
+    connection.off('ReceiveLogs');
+    connection.on('ReceiveLogs', handleReceiveLogs);
+
+    if (connection.state === HubConnectionState.Disconnected) {
+      connection.start()
+        .then(() => setError(null))
+        .catch((err) => {
           setError(`SignalR connection error: ${err.message}`);
           console.error('SignalR connection failed:', err);
         });
-
-        return () => {
-          connection.stop();
-        };
-      }).catch((err) => {
-        setError(`Failed to load SignalR: ${err.message}`);
-        console.error('SignalR import error:', err);
-      });
-    } catch (err) {
-      setError(`Unexpected error: ${err}`);
-      console.error('Error:', err);
     }
+
+    return () => {
+      connection.off('ReceiveLogs', handleReceiveLogs);
+    };
   }, []);
 
   useEffect(() => {
