@@ -24,20 +24,20 @@ namespace LogLens.Infrastructure.Data.Configurations
 
             // Add indexes for alert queries
             builder.HasIndex(a => new { a.Timestamp, a.Severity })
-                .HasName("idx_alerts_timestamp_severity");
+                .HasDatabaseName("idx_alerts_timestamp_severity");
 
             builder.HasIndex(a => a.Severity)
-                .HasName("idx_alerts_severity");
+                .HasDatabaseName("idx_alerts_severity");
 
             builder.HasIndex(a => a.Timestamp)
-                .HasName("idx_alerts_timestamp")
+                .HasDatabaseName("idx_alerts_timestamp")
                 .IsDescending();
 
             builder.HasIndex(a => a.IncidentId)
-                .HasName("idx_alerts_incidentid");
+                .HasDatabaseName("idx_alerts_incidentid");
 
             builder.HasIndex(a => a.ForecastId)
-                .HasName("idx_alerts_forecastid");
+                .HasDatabaseName("idx_alerts_forecastid");
         }
     }
 }

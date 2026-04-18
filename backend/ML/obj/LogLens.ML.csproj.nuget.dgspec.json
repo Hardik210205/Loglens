@@ -128,6 +128,10 @@
             "Microsoft.ML.FastTree": {
               "target": "Package",
               "version": "[3.0.0, )"
+            },
+            "Microsoft.ML.TimeSeries": {
+              "target": "Package",
+              "version": "[3.0.0, )"
             }
           },
           "imports": [

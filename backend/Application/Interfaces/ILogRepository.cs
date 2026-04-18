@@ -12,6 +12,7 @@ namespace LogLens.Application.Interfaces
         Task AddAsync(LogEntry entry, CancellationToken cancellationToken = default);
         Task<IEnumerable<LogEntry>> GetLogsSinceAsync(DateTime since, CancellationToken cancellationToken = default);
         Task<IEnumerable<LogEntry>> GetAllAsync(int? limit = null, CancellationToken cancellationToken = default);
+        Task<IEnumerable<LogEntry>> GetUnclusteredSinceAsync(DateTime since, CancellationToken cancellationToken = default);
         Task<IEnumerable<(int Hour, int Errors, int Warnings, int Info)>> GetLogCountsByHourAsync(DateTime since, CancellationToken cancellationToken = default);
     }
 }

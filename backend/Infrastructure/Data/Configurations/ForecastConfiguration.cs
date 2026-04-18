@@ -19,14 +19,14 @@ namespace LogLens.Infrastructure.Data.Configurations
 
             // Add indexes for forecast queries
             builder.HasIndex(f => f.ForecastTime)
-                .HasName("idx_forecasts_forecasttime")
+                .HasDatabaseName("idx_forecasts_forecasttime")
                 .IsDescending();
 
             builder.HasIndex(f => f.IncidentId)
-                .HasName("idx_forecasts_incidentid");
+                .HasDatabaseName("idx_forecasts_incidentid");
 
             builder.HasIndex(f => f.PredictedValue)
-                .HasName("idx_forecasts_predictedvalue");
+                .HasDatabaseName("idx_forecasts_predictedvalue");
         }
     }
 }

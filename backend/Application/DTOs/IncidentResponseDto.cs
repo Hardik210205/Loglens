@@ -4,10 +4,16 @@ namespace LogLens.Application.DTOs
 {
     public record IncidentResponseDto(
         Guid Id,
-        DateTime StartTime,
-        DateTime? EndTime,
-        string Description,
+        DateTime StartTimeUtc,
         string Severity,
-        int LogCount
+        string Title,
+        string Template,
+        string ServiceName,
+        int ErrorCount,
+        int WarningCount,
+        DateTime FirstSeen,
+        DateTime LastSeen,
+        string SuggestedCause,
+        string Status
     );
 }

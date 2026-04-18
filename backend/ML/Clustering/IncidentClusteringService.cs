@@ -179,13 +179,13 @@ namespace LogLens.ML.Clustering
         public float LevelScore { get; set; }
 
         [LoadColumn(2)]
-        public int MessageLength { get; set; }
+        public float MessageLength { get; set; }
 
         [LoadColumn(3)]
         public float TimestampTick { get; set; }
 
         [LoadColumn(4)]
-        public int MetadataLength { get; set; }
+        public float MetadataLength { get; set; }
     }
 
     public class LogClusterPrediction

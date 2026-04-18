@@ -10,5 +10,8 @@ namespace LogLens.Application.Interfaces
     {
         Task AddAsync(Incident incident, CancellationToken cancellationToken = default);
         Task<IEnumerable<Incident>> GetRecentAsync(DateTime since, CancellationToken cancellationToken = default);
+        Task<Incident?> FindActiveAsync(string template, string serviceName, DateTime minLastSeenUtc, CancellationToken cancellationToken = default);
+        Task<Incident?> FindRecentByServiceAsync(string serviceName, DateTime minStartTimeUtc, CancellationToken cancellationToken = default);
+        Task SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

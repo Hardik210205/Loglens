@@ -7,10 +7,17 @@ namespace LogLens.Infrastructure.BackgroundServices
 {
     public class LogQueueService : ILogQueueService
     {
+        private readonly LogChannel _logChannel;
+
+        public LogQueueService(LogChannel logChannel)
+        {
+            _logChannel = logChannel;
+        }
+
         public Task EnqueueAsync(LogEntry entry)
         {
             // write directly to the infrastructure channel
-            return LogChannel.Channel.Writer.WriteAsync(entry).AsTask();
+            return _logChannel.Channel.Writer.WriteAsync(entry).AsTask();
         }
     }
 }

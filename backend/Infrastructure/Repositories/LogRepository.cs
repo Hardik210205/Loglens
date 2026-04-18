@@ -33,6 +33,7 @@ namespace LogLens.Infrastructure.Repositories
         public async Task<IEnumerable<LogEntry>> GetLogsSinceAsync(DateTime since, CancellationToken cancellationToken = default)
         {
             return await _context.Logs
+                .AsNoTracking()
                 .Where(l => l.Timestamp >= since)
                 .OrderByDescending(l => l.Timestamp)
                 .ToListAsync(cancellationToken);
@@ -40,10 +41,21 @@ namespace LogLens.Infrastructure.Repositories
 
         public async Task<IEnumerable<LogEntry>> GetAllAsync(int? limit = null, CancellationToken cancellationToken = default)
         {
-            var query = _context.Logs.OrderByDescending(l => l.Timestamp).AsQueryable();
+            var query = _context.Logs
+                .AsNoTracking()
+                .OrderByDescending(l => l.Timestamp)
+                .AsQueryable();
             if (limit.HasValue)
                 query = query.Take(limit.Value);
             return await query.ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<LogEntry>> GetUnclusteredSinceAsync(DateTime since, CancellationToken cancellationToken = default)
+        {
+            return await _context.Logs
+                .Where(l => l.Timestamp >= since && string.IsNullOrEmpty(l.ClusterId))
+                .OrderBy(l => l.Timestamp)
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<(int Hour, int Errors, int Warnings, int Info)>> GetLogCountsByHourAsync(DateTime since, CancellationToken cancellationToken = default)

@@ -14,19 +14,26 @@ namespace LogLens.Infrastructure.Data.Configurations
             builder.Property(l => l.Level).IsRequired();
             builder.Property(l => l.Message).IsRequired().HasMaxLength(2048);
             builder.Property(l => l.Metadata).HasMaxLength(4000);
+            builder.Property(l => l.ClusterId).HasMaxLength(64);
 
             // Add composite index for common queries (timestamp + level)
             builder.HasIndex(l => new { l.Timestamp, l.Level })
-                .HasName("idx_logs_timestamp_level");
+                .HasDatabaseName("idx_logs_timestamp_level");
 
             // Add index for timestamp-based queries (for forecasting)
             builder.HasIndex(l => l.Timestamp)
-                .HasName("idx_logs_timestamp")
+                .HasDatabaseName("idx_logs_timestamp")
                 .IsDescending();
 
             // Add index for level-based filtering
             builder.HasIndex(l => l.Level)
-                .HasName("idx_logs_level");
+                .HasDatabaseName("idx_logs_level");
+
+            builder.HasIndex(l => l.ClusterId)
+                .HasDatabaseName("idx_logs_clusterid");
+
+            builder.HasIndex(l => l.IncidentId)
+                .HasDatabaseName("idx_logs_incidentid");
 
             // Table hint for columnstore (comment with guidance)
             // Note: This requires manual ALTER TABLE statement after migration:

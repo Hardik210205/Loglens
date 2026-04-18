@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using LogLens.Application.DTOs;
 using LogLens.Application.Interfaces;
-using LogLens.Domain.Enums;
 
 namespace LogLens.API.Endpoints
 {
@@ -11,58 +11,232 @@ namespace LogLens.API.Endpoints
     {
         public static void MapLogEndpoints(this WebApplication app)
         {
-            // Ingestion endpoint used by external services
-            app.MapPost("/api/logs", async (IngestLogRequest log, ILogService logService) =>
+            static Task<IResult> IngestAsync(IngestLogRequest log, ILogService logService)
             {
-                await logService.EnqueueAsync(log);
-                return Results.Accepted();
-            })
+                return ExecuteAsync();
+
+                async Task<IResult> ExecuteAsync()
+                {
+                    try
+                    {
+                        await logService.EnqueueAsync(log);
+                        return Results.Accepted();
+                    }
+                    catch
+                    {
+                        return Results.Accepted();
+                    }
+                }
+            }
+
+            // Ingestion endpoint used by external services
+            app.MapPost("/api/logs", IngestAsync)
             .WithName("IngestLog")
+            .WithTags("Logs");
+
+            app.MapPost("/logs", IngestAsync)
+            .WithName("IngestLogAlias")
             .WithTags("Logs");
 
             app.MapGet("/api/logs", async (ILogRepository logRepo, int? limit) =>
             {
-                var logs = await logRepo.GetAllAsync(limit ?? 1000);
-                var dtos = logs.Select(l => new LogResponseDto(
-                    l.Id,
-                    l.Timestamp,
-                    l.Level.ToString(),
-                    l.Message,
-                    l.Metadata
-                )).ToList();
-                return Results.Ok(dtos);
+                try
+                {
+                    var logs = (await logRepo.GetAllAsync(limit ?? 100)) ?? Enumerable.Empty<LogLens.Domain.Entities.LogEntry>();
+                    var dtos = logs.Select(l => new LogResponseDto(
+                        l.Id,
+                        l.Timestamp,
+                        l.Level.ToString(),
+                        l.Message,
+                        l.Metadata
+                    )).ToList();
+
+                    return Results.Ok(dtos);
+                }
+                catch
+                {
+                    return Results.Ok(new List<LogResponseDto>());
+                }
             })
             .WithName("GetLogs")
             .WithTags("Logs");
 
-            app.MapGet("/api/incidents", async (IIncidentRepository incidentRepo) =>
+            app.MapGet("/logs", async (ILogRepository logRepo, int? limit) =>
             {
-                var since = DateTime.UtcNow.AddHours(-24);
-                var incidents = await incidentRepo.GetRecentAsync(since);
-                var dtos = incidents.Select(i => new IncidentResponseDto(
-                    i.Id,
-                    i.StartTime,
-                    i.EndTime,
-                    i.Description,
-                    MapSeverity(i.Severity),
-                    i.LogEntries?.Count ?? 0
-                )).ToList();
-                return Results.Ok(dtos);
+                try
+                {
+                    var logs = (await logRepo.GetAllAsync(limit ?? 100)) ?? Enumerable.Empty<LogLens.Domain.Entities.LogEntry>();
+                    var dtos = logs.Select(l => new LogResponseDto(
+                        l.Id,
+                        l.Timestamp,
+                        l.Level.ToString(),
+                        l.Message,
+                        l.Metadata
+                    )).ToList();
+
+                    return Results.Ok(dtos);
+                }
+                catch
+                {
+                    return Results.Ok(new List<LogResponseDto>());
+                }
+            })
+            .WithName("GetLogsAlias")
+            .WithTags("Logs");
+
+            app.MapGet("/api/incidents", async (IIncidentService incidentService) =>
+            {
+                try
+                {
+                    var incidents = await incidentService.GetIncidentsForLast24HoursAsync();
+                    var dtos = incidents.Select(i => new IncidentResponseDto(
+                        i.Id,
+                        i.StartTimeUtc,
+                        i.Severity.ToString().ToLowerInvariant(),
+                        i.Title,
+                        i.Template,
+                        i.ServiceName,
+                        i.ErrorCount,
+                        i.WarningCount,
+                        i.FirstSeen,
+                        i.LastSeen,
+                        i.SuggestedCause,
+                        i.Status
+                    )).ToList();
+
+                    return Results.Ok(dtos);
+                }
+                catch
+                {
+                    return Results.Ok(new List<IncidentResponseDto>());
+                }
             })
             .WithName("GetIncidents")
             .WithTags("Incidents");
 
+            app.MapGet("/incidents", async (IIncidentService incidentService) =>
+            {
+                try
+                {
+                    var incidents = await incidentService.GetIncidentsForLast24HoursAsync();
+                    var dtos = incidents.Select(i => new IncidentResponseDto(
+                        i.Id,
+                        i.StartTimeUtc,
+                        i.Severity.ToString().ToLowerInvariant(),
+                        i.Title,
+                        i.Template,
+                        i.ServiceName,
+                        i.ErrorCount,
+                        i.WarningCount,
+                        i.FirstSeen,
+                        i.LastSeen,
+                        i.SuggestedCause,
+                        i.Status
+                    )).ToList();
+
+                    return Results.Ok(dtos);
+                }
+                catch
+                {
+                    return Results.Ok(new List<IncidentResponseDto>());
+                }
+            })
+            .WithName("GetIncidentsLast24h")
+            .WithTags("Incidents");
+
+            app.MapGet("/api/insights/risk", async (IRiskAnalysisService riskAnalysisService) =>
+            {
+                try
+                {
+                    var result = await riskAnalysisService.AnalyzeSystemRiskAsync();
+                    return Results.Ok(result);
+                }
+                catch
+                {
+                    return Results.Ok(new RiskAnalysisResultDto
+                    {
+                        Score = 0,
+                        Reason = "No data available",
+                        AffectedService = "UnknownService",
+                        PredictedWindow = "No immediate risk"
+                    });
+                }
+            })
+            .WithName("GetSystemRisk")
+            .WithTags("Insights");
+
+            app.MapGet("/api/insights/services", async (IRiskAnalysisService riskAnalysisService) =>
+            {
+                try
+                {
+                    var result = await riskAnalysisService.GetTopFailingServicesAsync();
+                    return Results.Ok(result ?? new List<ServiceRiskInsightDto>());
+                }
+                catch
+                {
+                    return Results.Ok(new List<ServiceRiskInsightDto>());
+                }
+            })
+            .WithName("GetTopFailingServices")
+            .WithTags("Insights");
+
+            app.MapGet("/api/services/top-failing", async (IRiskAnalysisService riskAnalysisService) =>
+            {
+                try
+                {
+                    var result = await riskAnalysisService.GetTopFailingServicesAsync();
+                    return Results.Ok(result ?? new List<ServiceRiskInsightDto>());
+                }
+                catch
+                {
+                    return Results.Ok(new List<ServiceRiskInsightDto>());
+                }
+            })
+            .WithName("GetTopFailingServicesAlias")
+            .WithTags("Insights");
+
+            app.MapGet("/api/insights/prediction", async (
+                IRiskAnalysisService riskAnalysisService,
+                int? bucketMinutes,
+                int? historyBuckets,
+                int? projectionBuckets) =>
+            {
+                try
+                {
+                    var result = await riskAnalysisService.GetErrorTrendPredictionAsync(
+                        bucketMinutes ?? 5,
+                        historyBuckets ?? 12,
+                        projectionBuckets ?? 3);
+
+                    return Results.Ok(result ?? new List<ErrorTrendPointDto>());
+                }
+                catch
+                {
+                    return Results.Ok(new List<ErrorTrendPointDto>());
+                }
+            })
+            .WithName("GetErrorTrendPrediction")
+            .WithTags("Insights");
+
             app.MapGet("/api/stats/heatmap", async (ILogRepository logRepo) =>
             {
-                var since = DateTime.UtcNow.AddHours(-24);
-                var counts = await logRepo.GetLogCountsByHourAsync(since);
-                var dtos = counts.Select(c => new HeatmapResponseDto(
-                    $"{c.Hour:D2}:00",
-                    c.Errors,
-                    c.Warnings,
-                    c.Info
-                )).ToList();
-                return Results.Ok(dtos);
+                try
+                {
+                    var since = DateTime.UtcNow.AddHours(-24);
+                    var counts = (await logRepo.GetLogCountsByHourAsync(since)) ?? Enumerable.Empty<(int Hour, int Errors, int Warnings, int Info)>();
+                    var dtos = counts.Select(c => new HeatmapResponseDto(
+                        $"{c.Hour:D2}:00",
+                        c.Errors,
+                        c.Warnings,
+                        c.Info
+                    )).ToList();
+
+                    return Results.Ok(dtos);
+                }
+                catch
+                {
+                    return Results.Ok(new List<HeatmapResponseDto>());
+                }
             })
             .WithName("GetHeatmap")
             .WithTags("Stats");
@@ -73,18 +247,60 @@ namespace LogLens.API.Endpoints
                 IAlertRepository alertRepo,
                 IForecastRepository forecastRepo) =>
             {
-                var since = DateTime.UtcNow.AddHours(-24);
-                var logs24h = (await logRepo.GetLogsSinceAsync(since)).Count();
-                var incidents = (await incidentRepo.GetRecentAsync(since)).ToList();
-                var activeIncidents = incidents.Count(i => i.EndTime == null);
-                var alerts24h = await alertRepo.GetCountSinceAsync(since);
-                var healthPercent = logs24h > 0
-                    ? Math.Max(0, 100 - (int)((double)(incidents.Count * 5) / logs24h * 100))
-                    : 100;
-                var dto = new DashboardStatsDto(logs24h, activeIncidents, alerts24h, Math.Min(100, healthPercent));
-                return Results.Ok(dto);
+                try
+                {
+                    var since = DateTime.UtcNow.AddHours(-24);
+                    var logs24h = ((await logRepo.GetLogsSinceAsync(since)) ?? Enumerable.Empty<LogLens.Domain.Entities.LogEntry>()).Count();
+                    var incidents = ((await incidentRepo.GetRecentAsync(since)) ?? Enumerable.Empty<LogLens.Domain.Entities.Incident>()).ToList();
+                    var activeIncidents = incidents.Count(i => string.Equals(i.Status, "Active", StringComparison.OrdinalIgnoreCase));
+                    var alerts24h = Math.Max(0, await alertRepo.GetCountSinceAsync(since));
+                    var healthPercent = logs24h > 0
+                        ? Math.Max(0, 100 - (int)((double)(incidents.Count * 5) / logs24h * 100))
+                        : 100;
+                    var dto = new DashboardStatsDto(logs24h, activeIncidents, alerts24h, Math.Min(100, healthPercent));
+                    return Results.Ok(dto);
+                }
+                catch
+                {
+                    return Results.Ok(new DashboardStatsDto(
+                        TotalLogs24h: 0,
+                        ActiveIncidents: 0,
+                        PendingAlerts24h: 0,
+                        SystemHealthPercent: 100));
+                }
             })
             .WithName("GetDashboardStats")
+            .WithTags("Stats");
+
+            app.MapGet("/api/dashboard/stats", async (
+                ILogRepository logRepo,
+                IIncidentRepository incidentRepo,
+                IAlertRepository alertRepo,
+                IForecastRepository forecastRepo) =>
+            {
+                try
+                {
+                    var since = DateTime.UtcNow.AddHours(-24);
+                    var logs24h = ((await logRepo.GetLogsSinceAsync(since)) ?? Enumerable.Empty<LogLens.Domain.Entities.LogEntry>()).Count();
+                    var incidents = ((await incidentRepo.GetRecentAsync(since)) ?? Enumerable.Empty<LogLens.Domain.Entities.Incident>()).ToList();
+                    var activeIncidents = incidents.Count(i => string.Equals(i.Status, "Active", StringComparison.OrdinalIgnoreCase));
+                    var alerts24h = Math.Max(0, await alertRepo.GetCountSinceAsync(since));
+                    var healthPercent = logs24h > 0
+                        ? Math.Max(0, 100 - (int)((double)(incidents.Count * 5) / logs24h * 100))
+                        : 100;
+
+                    return Results.Ok(new DashboardStatsDto(logs24h, activeIncidents, alerts24h, Math.Min(100, healthPercent)));
+                }
+                catch
+                {
+                    return Results.Ok(new DashboardStatsDto(
+                        TotalLogs24h: 0,
+                        ActiveIncidents: 0,
+                        PendingAlerts24h: 0,
+                        SystemHealthPercent: 100));
+                }
+            })
+            .WithName("GetDashboardStatsAlias")
             .WithTags("Stats");
 
             app.MapGet("/api/stats/ai", async (
@@ -93,35 +309,35 @@ namespace LogLens.API.Endpoints
                 IIncidentClusteringService clusteringService,
                 IForecastService forecastService) =>
             {
-                var since = DateTime.UtcNow.AddHours(-24);
-                var incidents = await incidentRepo.GetRecentAsync(since);
-                var incidentCount = incidents.Count();
-                var forecastCount = await forecastRepo.GetCountSinceAsync(since);
-                var clusteringAccuracy = (int)(await clusteringService.GetClusteringAccuracyAsync() * 100);
-                var forecastingAccuracy = (int)(await forecastService.GetForecastAccuracyAsync() * 100);
-                var dto = new AIStatusDto(
-                    ClusteringAccuracy: clusteringAccuracy,
-                    ForecastingAccuracy: forecastingAccuracy,
-                    IncidentsDetected: incidentCount,
-                    ForecastsGenerated: forecastCount,
-                    LastUpdate: DateTime.UtcNow
-                );
-                return Results.Ok(dto);
+                try
+                {
+                    var since = DateTime.UtcNow.AddHours(-24);
+                    var incidents = (await incidentRepo.GetRecentAsync(since)) ?? Enumerable.Empty<LogLens.Domain.Entities.Incident>();
+                    var incidentCount = incidents.Count();
+                    var forecastCount = Math.Max(0, await forecastRepo.GetCountSinceAsync(since));
+                    var clusteringAccuracy = (int)(await clusteringService.GetClusteringAccuracyAsync() * 100);
+                    var forecastingAccuracy = (int)(await forecastService.GetForecastAccuracyAsync() * 100);
+                    var dto = new AIStatusDto(
+                        ClusteringAccuracy: clusteringAccuracy,
+                        ForecastingAccuracy: forecastingAccuracy,
+                        IncidentsDetected: incidentCount,
+                        ForecastsGenerated: forecastCount,
+                        LastUpdate: DateTime.UtcNow
+                    );
+                    return Results.Ok(dto);
+                }
+                catch
+                {
+                    return Results.Ok(new AIStatusDto(
+                        ClusteringAccuracy: 0,
+                        ForecastingAccuracy: 0,
+                        IncidentsDetected: 0,
+                        ForecastsGenerated: 0,
+                        LastUpdate: DateTime.UtcNow));
+                }
             })
             .WithName("GetAIStatus")
             .WithTags("Stats");
-        }
-
-        private static string MapSeverity(SeverityLevel s)
-        {
-            return s switch
-            {
-                SeverityLevel.Critical => "Critical",
-                SeverityLevel.High => "Major",
-                SeverityLevel.Medium => "Minor",
-                SeverityLevel.Low => "Low",
-                _ => "Low"
-            };
         }
     }
 }

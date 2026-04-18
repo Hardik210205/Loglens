@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -22,13 +21,13 @@ namespace LogLens.Infrastructure.BackgroundServices
         private object? _hubContext; // Generic IHubContext<LogHub> as object to avoid reference
         private Type? _logHubType;
         private const int BatchSize = 50;
-        private readonly TimeSpan _flushInterval = TimeSpan.FromSeconds(5);
+        private readonly TimeSpan _flushInterval = TimeSpan.FromMilliseconds(500);
         private const string ReceiveLogsMethod = "ReceiveLogs";
 
-        public LogBatchInserter(IServiceProvider services)
+        public LogBatchInserter(IServiceProvider services, LogChannel logChannel)
         {
             _services = services;
-            _channel = LogChannel.Channel;
+            _channel = logChannel.Channel;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -105,14 +104,16 @@ namespace LogLens.Infrastructure.BackgroundServices
                 // Get IHubContext<LogHub> dynamically
                 if (_hubContext == null)
                 {
-                    // Get IHubContext type dynamically. In ASP.NET Core 8/9 the type lives in Microsoft.AspNetCore.SignalR.Core.
-                    var iHubContextTypeName = "Microsoft.AspNetCore.SignalR.IHubContext`1, Microsoft.AspNetCore.SignalR.Core";
-                    var iHubContextBaseType = Type.GetType(iHubContextTypeName);
+                    var iHubContextBaseType =
+                        Type.GetType("Microsoft.AspNetCore.SignalR.IHubContext`1, Microsoft.AspNetCore.SignalR.Core") ??
+                        Type.GetType("Microsoft.AspNetCore.SignalR.IHubContext`1, Microsoft.AspNetCore.SignalR");
+
                     if (iHubContextBaseType == null)
                     {
                         Console.WriteLine("IHubContext type not found");
                         return;
                     }
+
                     var iHubContextType = iHubContextBaseType.MakeGenericType(_logHubType);
                     _hubContext = scope.ServiceProvider.GetService(iHubContextType);
                     if (_hubContext == null)
@@ -140,8 +141,24 @@ namespace LogLens.Infrastructure.BackgroundServices
                 var clients = clientsProperty?.GetValue(_hubContext);
                 var allProperty = clients?.GetType().GetProperty("All");
                 var all = allProperty?.GetValue(clients);
-                var sendAsyncMethod = all?.GetType().GetMethod("SendAsync", new[] { typeof(string), typeof(object[]) });
-                await (Task?)sendAsyncMethod?.Invoke(all, new object[] { ReceiveLogsMethod, new object[] { logDtos } })!;
+                var sendCoreAsyncMethod = all?.GetType().GetMethod(
+                    "SendCoreAsync",
+                    new[] { typeof(string), typeof(object[]), typeof(CancellationToken) });
+
+                if (sendCoreAsyncMethod == null)
+                {
+                    Console.WriteLine("SendCoreAsync method not found on SignalR client proxy");
+                    return;
+                }
+
+                var sendTask = sendCoreAsyncMethod.Invoke(
+                    all,
+                    new object[] { ReceiveLogsMethod, new object[] { logDtos }, CancellationToken.None }) as Task;
+
+                if (sendTask != null)
+                {
+                    await sendTask;
+                }
             }
             catch (Exception ex)
             {

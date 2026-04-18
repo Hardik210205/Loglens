@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net9.0": {
+    "net8.0": {
       "Humanizer.Core/2.14.1": {
         "type": "package",
         "compile": {
@@ -991,6 +991,77 @@
           }
         }
       },
+      "Microsoft.ML.Mkl.Redist/3.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/_._": {}
+        },
+        "build": {
+          "build/netstandard2.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/libMklImports.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/libMklProxyNative.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/osx-x64/native/libMklImports.dylib": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          },
+          "runtimes/osx-x64/native/libMklProxyNative.dylib": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          },
+          "runtimes/win-x64/native/MklImports.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/MklProxyNative.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/libiomp5md.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x86/native/MklImports.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/MklProxyNative.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/libiomp5md.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          }
+        }
+      },
+      "Microsoft.ML.TimeSeries/3.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.ML": "3.0.0",
+          "Microsoft.ML.Mkl.Redist": "3.0.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/Microsoft.ML.TimeSeries.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.TimeSeries.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.NET.StringTools/17.4.0": {
         "type": "package",
         "dependencies": {
@@ -1765,7 +1836,9 @@
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
           "LogLens.Domain": "1.0.0",
-          "LogLens.ML": "1.0.0"
+          "LogLens.ML": "1.0.0",
+          "Microsoft.Extensions.Caching.Abstractions": "8.0.0",
+          "Microsoft.Extensions.Hosting.Abstractions": "8.0.0"
         },
         "compile": {
           "bin/placeholder/LogLens.Application.dll": {}
@@ -1808,7 +1881,8 @@
         "dependencies": {
           "LogLens.Domain": "1.0.0",
           "Microsoft.ML": "3.0.0",
-          "Microsoft.ML.FastTree": "3.0.0"
+          "Microsoft.ML.FastTree": "3.0.0",
+          "Microsoft.ML.TimeSeries": "3.0.0"
         },
         "compile": {
           "bin/placeholder/LogLens.ML.dll": {}
@@ -3357,6 +3431,47 @@
         "runtimes/osx-x64/native/libFastTreeNative.dylib",
         "runtimes/win-x64/native/FastTreeNative.dll",
         "runtimes/win-x86/native/FastTreeNative.dll"
+      ]
+    },
+    "Microsoft.ML.Mkl.Redist/3.0.0": {
+      "sha512": "jjyoy8QsA1wUY9Psf7XczvOczYR1DyrAWcISoZmHhxtY/Y5LwUo00PlbXMQU3LDZKyiWUPwdxwfoDHa6lkk3Yg==",
+      "type": "package",
+      "path": "microsoft.ml.mkl.redist/3.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "build/netstandard2.0/Microsoft.ML.Mkl.Redist.props",
+        "lib/netstandard2.0/_._",
+        "microsoft.ml.mkl.redist.3.0.0.nupkg.sha512",
+        "microsoft.ml.mkl.redist.nuspec",
+        "mlnetlogo.png",
+        "runtimes/linux-x64/native/libMklImports.so",
+        "runtimes/linux-x64/native/libMklProxyNative.so",
+        "runtimes/osx-x64/native/libMklImports.dylib",
+        "runtimes/osx-x64/native/libMklProxyNative.dylib",
+        "runtimes/win-x64/native/MklImports.dll",
+        "runtimes/win-x64/native/MklProxyNative.dll",
+        "runtimes/win-x64/native/libiomp5md.dll",
+        "runtimes/win-x86/native/MklImports.dll",
+        "runtimes/win-x86/native/MklProxyNative.dll",
+        "runtimes/win-x86/native/libiomp5md.dll"
+      ]
+    },
+    "Microsoft.ML.TimeSeries/3.0.0": {
+      "sha512": "AKUFxRg/RNZWvGULgsAaEctBBJPffqp/efEjPUckaoBLbrLtWtUxmnSef22qD6qvM4Isnx8HLb4IBx4XmtKpGw==",
+      "type": "package",
+      "path": "microsoft.ml.timeseries/3.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/netstandard2.0/Microsoft.ML.TimeSeries.dll",
+        "lib/netstandard2.0/Microsoft.ML.TimeSeries.xml",
+        "microsoft.ml.timeseries.3.0.0.nupkg.sha512",
+        "microsoft.ml.timeseries.nuspec",
+        "mlnetlogo.png"
       ]
     },
     "Microsoft.NET.StringTools/17.4.0": {
@@ -4912,7 +5027,7 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net9.0": [
+    "net8.0": [
       "LogLens.Application >= 1.0.0",
       "LogLens.Domain >= 1.0.0",
       "LogLens.Infrastructure >= 1.0.0",
@@ -4946,7 +5061,7 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net9.0"
+        "net8.0"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -4954,8 +5069,8 @@
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net9.0": {
-          "targetAlias": "net9.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "projectReferences": {
             "D:\\.NET_Project\\Loglens\\backend\\Application\\LogLens.Application.csproj": {
               "projectPath": "D:\\.NET_Project\\Loglens\\backend\\Application\\LogLens.Application.csproj"
@@ -4985,8 +5100,8 @@
       "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
-      "net9.0": {
-        "targetAlias": "net9.0",
+      "net8.0": {
+        "targetAlias": "net8.0",
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Design": {
             "target": "Package",

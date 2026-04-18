@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "s4xM7rUoi9U=",
+  "dgSpecHash": "AJlVG6XeRZA=",
   "success": true,
   "projectFilePath": "D:\\.NET_Project\\Loglens\\backend\\Infrastructure\\LogLens.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -30,6 +30,8 @@
     "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.ml.cpumath\\3.0.0\\microsoft.ml.cpumath.3.0.0.nupkg.sha512",
     "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.ml.dataview\\3.0.0\\microsoft.ml.dataview.3.0.0.nupkg.sha512",
     "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.ml.fasttree\\3.0.0\\microsoft.ml.fasttree.3.0.0.nupkg.sha512",
+    "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.ml.mkl.redist\\3.0.0\\microsoft.ml.mkl.redist.3.0.0.nupkg.sha512",
+    "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.ml.timeseries\\3.0.0\\microsoft.ml.timeseries.3.0.0.nupkg.sha512",
     "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.net.stringtools\\17.4.0\\microsoft.net.stringtools.17.4.0.nupkg.sha512",
     "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Users\\HARDIK\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",

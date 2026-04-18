@@ -9,8 +9,12 @@ using LogLens.Application.Interfaces;
 using LogLens.Application.Services;
 using LogLens.API.Endpoints;
 using LogLens.API.Hubs;
+using LogLens.API.Middleware;
 using LogLens.Infrastructure.BackgroundServices;
+using LogLens.Infrastructure.Queue;
 using LogLens.Infrastructure.Repositories;
+using LogLens.ML.Clustering;
+using LogLens.ML.Forecasting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,10 +74,12 @@ builder.Services.AddSwaggerGen(c =>
 
 // controllers
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
 
 // dependency injection
-builder.Services.AddSingleton<ILogService, LogService>();
+builder.Services.AddSingleton<LogChannel>();
 builder.Services.AddSingleton<ILogQueueService, LogQueueService>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IIncidentRepository, IncidentRepository>();
@@ -81,8 +87,14 @@ builder.Services.AddScoped<IForecastRepository, ForecastRepository>();
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
 
 // Add ML services
+builder.Services.AddSingleton<IncidentClusteringService>();
+builder.Services.AddSingleton<WarningForecastService>();
 builder.Services.AddScoped<IIncidentClusteringService, IncidentClusteringApplicationService>();
 builder.Services.AddScoped<IForecastService, ForecastApplicationService>();
+builder.Services.AddSingleton<ILogSanitizer, LogSanitizer>();
+builder.Services.AddScoped<ILogAnalyticsService, LogAnalyticsService>();
+builder.Services.AddScoped<IRiskAnalysisService, RiskAnalysisService>();
+builder.Services.AddScoped<IIncidentService, IncidentService>();
 
 // background processing
 builder.Services.AddHostedService<LogBatchInserter>();
@@ -90,11 +102,16 @@ builder.Services.AddHostedService<MlProcessingService>();
 
 var app = builder.Build();
 
-// Apply migrations automatically
-using (var scope = app.Services.CreateScope())
+// Apply migrations automatically, but do not crash startup when DB is temporarily unavailable.
+try
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<LogLensDbContext>();
     db.Database.Migrate();
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "Database migration failed during startup. Running in degraded mode with endpoint fallbacks.");
 }
 
 // Swagger UI in development
@@ -109,6 +126,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors("AllowFrontend");
 
 app.MapHealthChecks("/health");
@@ -118,7 +136,7 @@ app.MapHealthChecks("/health/detailed", new Microsoft.AspNetCore.Diagnostics.Hea
 });
 
 app.MapLogEndpoints();
-app.MapHub<LogHub>("/hubs/logs");
+app.MapHub<LogHub>("/loghub");
 
 app.Run();
 
