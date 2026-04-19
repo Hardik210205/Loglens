@@ -5,6 +5,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR;
 using LogLens.Domain.Entities;
 using LogLens.Infrastructure.Data;
@@ -17,6 +18,7 @@ namespace LogLens.Infrastructure.BackgroundServices
     public class LogBatchInserter : BackgroundService
     {
         private readonly IServiceProvider _services;
+        private readonly ILogger<LogBatchInserter> _logger;
         private readonly Channel<LogEntry> _channel;
         private object? _hubContext; // Generic IHubContext<LogHub> as object to avoid reference
         private Type? _logHubType;
@@ -24,10 +26,14 @@ namespace LogLens.Infrastructure.BackgroundServices
         private readonly TimeSpan _flushInterval = TimeSpan.FromMilliseconds(500);
         private const string ReceiveLogsMethod = "ReceiveLogs";
 
-        public LogBatchInserter(IServiceProvider services, LogChannel logChannel)
+        public LogBatchInserter(
+            IServiceProvider services,
+            LogChannel logChannel,
+            ILogger<LogBatchInserter> logger)
         {
             _services = services;
             _channel = logChannel.Channel;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -41,25 +47,35 @@ namespace LogLens.Infrastructure.BackgroundServices
                 {
                     var log = await reader.ReadAsync(stoppingToken);
                     buffer.Add(log);
-                }
-                catch (ChannelClosedException)
-                {
-                    break;
-                }
 
-                if (buffer.Count >= BatchSize ||
-                    await reader.WaitToReadAsync(stoppingToken) == false)
-                {
-                    await FlushBuffer(buffer, stoppingToken);
-                }
-                else if (buffer.Count > 0)
-                {
-                    // wait a little while before flushing
-                    await Task.Delay(_flushInterval, stoppingToken);
-                    if (buffer.Count > 0)
+                    if (buffer.Count >= BatchSize ||
+                        await reader.WaitToReadAsync(stoppingToken) == false)
                     {
                         await FlushBuffer(buffer, stoppingToken);
                     }
+                    else if (buffer.Count > 0)
+                    {
+                        // wait a little while before flushing
+                        await Task.Delay(_flushInterval, stoppingToken);
+                        if (buffer.Count > 0)
+                        {
+                            await FlushBuffer(buffer, stoppingToken);
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected during graceful shutdown.
+                    break;
+                }
+                catch (ChannelClosedException)
+                {
+                    // Expected when channel is closed during shutdown.
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unexpected error while batching logs.");
                 }
             }
 

@@ -175,8 +175,6 @@ export const formatUtcTimestamp = (iso: string) => {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false,
-    timeZone: 'UTC',
-    timeZoneName: 'short'
+    hour12: false
   }).format(d);
 };

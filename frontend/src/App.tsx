@@ -79,7 +79,7 @@ const App: React.FC = () => {
     <Router>
       {toastContainer}
       <nav className="navbar">
-        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginRight: '2rem' }}>LogLens</div>
+        <div style={{ fontSize: '1.2rem', fontWeight: 700, marginRight: '2rem', letterSpacing: '0.06em' }}>LogLens</div>
         <Link to="/">Live Logs</Link>
         <Link to="/incidents">Incidents</Link>
         <Link to="/dashboard">Dashboard</Link>

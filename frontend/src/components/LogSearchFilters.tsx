@@ -29,19 +29,20 @@ const LogSearchFilters: React.FC<LogFiltersProps> = ({ onFiltersChange }) => {
   return (
     <div style={{
       padding: '1rem',
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      background: 'linear-gradient(140deg, rgba(30,41,59,0.84), rgba(15,23,42,0.97))',
+      borderRadius: '16px',
+      boxShadow: '0 12px 30px rgba(2, 6, 23, 0.38)',
+      border: '1px solid rgba(148,163,184,0.22)',
       marginBottom: '1.5rem'
     }}>
-      <h3>Search & Filters</h3>
+      <h3 style={{ marginTop: 0, color: '#f8fafc' }}>Search & Filters</h3>
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '1rem'
       }}>
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#bfdbfe' }}>
             Search Message
           </label>
           <input
@@ -52,15 +53,17 @@ const LogSearchFilters: React.FC<LogFiltersProps> = ({ onFiltersChange }) => {
             style={{
               width: '100%',
               padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontFamily: 'monospace'
+              border: '1px solid rgba(125, 211, 252, 0.3)',
+              borderRadius: '8px',
+              fontFamily: 'JetBrains Mono, Consolas, Monaco, monospace',
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
+              color: '#e2e8f0'
             }}
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#bfdbfe' }}>
             Log Level
           </label>
           <select
@@ -69,8 +72,10 @@ const LogSearchFilters: React.FC<LogFiltersProps> = ({ onFiltersChange }) => {
             style={{
               width: '100%',
               padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px'
+              border: '1px solid rgba(125, 211, 252, 0.3)',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
+              color: '#e2e8f0'
             }}
           >
             <option>All</option>
@@ -84,7 +89,7 @@ const LogSearchFilters: React.FC<LogFiltersProps> = ({ onFiltersChange }) => {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#bfdbfe' }}>
             Start Date
           </label>
           <input
@@ -94,14 +99,16 @@ const LogSearchFilters: React.FC<LogFiltersProps> = ({ onFiltersChange }) => {
             style={{
               width: '100%',
               padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px'
+              border: '1px solid rgba(125, 211, 252, 0.3)',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
+              color: '#e2e8f0'
             }}
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#bfdbfe' }}>
             End Date
           </label>
           <input
@@ -111,8 +118,10 @@ const LogSearchFilters: React.FC<LogFiltersProps> = ({ onFiltersChange }) => {
             style={{
               width: '100%',
               padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px'
+              border: '1px solid rgba(125, 211, 252, 0.3)',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
+              color: '#e2e8f0'
             }}
           />
         </div>

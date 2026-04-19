@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchIncidents, fetchSystemRisk, formatUtcTimestamp, IncidentDto } from '../services/api';
+import { fetchIncidents, fetchSystemRisk, IncidentDto } from '../services/api';
 
 interface Incident {
   id: string;
@@ -15,6 +15,15 @@ interface Incident {
   suggestedCause: string;
   status: 'Active' | 'Resolved';
 }
+
+const formatKolkataTimestamp = (timestamp: string) => {
+  const value = new Date(timestamp);
+  if (Number.isNaN(value.getTime())) {
+    return '-';
+  }
+
+  return value.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+};
 
 const IncidentExplorer: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -74,7 +83,7 @@ const IncidentExplorer: React.FC = () => {
     if (severity === 'critical') return '#dc2626';
     if (severity === 'high') return '#f97316';
     if (severity === 'medium') return '#f59e0b';
-    return '#22c55e';
+    return '#38bdf8';
   };
 
   const getStatusBadge = (status: Incident['status']) => {
@@ -111,8 +120,8 @@ const IncidentExplorer: React.FC = () => {
   if (loading) return <div>Loading incidents...</div>;
   if (error) return (
     <div>
-      <h2>Incident Explorer</h2>
-      <div style={{ color: '#ef4444', padding: '1rem', backgroundColor: '#fee2e2', borderRadius: '8px' }}>
+      <h2 style={{ color: '#f8fafc' }}>Incident Explorer</h2>
+      <div style={{ color: '#fecaca', padding: '1rem', backgroundColor: 'rgba(127,29,29,0.4)', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.35)' }}>
         {error}
       </div>
     </div>
@@ -120,27 +129,28 @@ const IncidentExplorer: React.FC = () => {
 
   return (
     <div>
-      <h2>Incident Explorer</h2>
+      <h2 style={{ color: '#f8fafc', fontSize: '1.85rem', letterSpacing: '0.02em', marginTop: 0 }}>Incident Explorer</h2>
 
       {riskScore != null && riskScore > 70 && incidents.length === 0 && (
         <div style={{
           padding: '1rem',
-          borderRadius: '8px',
+          borderRadius: '12px',
           marginBottom: '1rem',
-          borderLeft: '4px solid #f97316',
-          backgroundColor: '#fff7ed',
-          color: '#9a3412'
+          border: '1px solid rgba(249,115,22,0.35)',
+          backgroundColor: 'rgba(124,45,18,0.35)',
+          color: '#fed7aa'
         }}>
           Risk is currently {riskScore}% but no incident has been recorded yet. Monitor system behavior closely.
         </div>
       )}
 
       <div style={{
-        padding: '1rem',
-        backgroundColor: '#f0f9ff',
-        borderRadius: '8px',
+        padding: '0.9rem 1rem',
+        background: 'linear-gradient(135deg, rgba(30,58,138,0.45), rgba(15,118,110,0.35))',
+        borderRadius: '12px',
         marginBottom: '1.5rem',
-        borderLeft: '4px solid #3b82f6'
+        border: '1px solid rgba(59,130,246,0.35)',
+        color: '#dbeafe'
       }}>
         Found {incidents.length} incidents in the last 24 hours
       </div>
@@ -149,10 +159,10 @@ const IncidentExplorer: React.FC = () => {
         <div style={{
           padding: '2rem',
           textAlign: 'center',
-          color: '#166534',
-          backgroundColor: '#f0fdf4',
-          borderRadius: '8px',
-          border: '1px solid #bbf7d0'
+          color: '#86efac',
+          backgroundColor: 'rgba(20, 83, 45, 0.45)',
+          borderRadius: '12px',
+          border: '1px solid rgba(34,197,94,0.35)'
         }}>
           <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.35rem' }}>System Healthy</div>
           <div>No incidents detected in the last 24 hours.</div>
@@ -164,66 +174,63 @@ const IncidentExplorer: React.FC = () => {
           <div
             key={incident.id}
             style={{
-              padding: '1rem',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              borderLeft: `4px solid ${getSeverityColor(incident.severity)}`
+              padding: '1.05rem',
+              background: 'linear-gradient(130deg, rgba(30,41,59,0.85), rgba(15,23,42,0.97))',
+              borderRadius: '16px',
+              boxShadow: '0 10px 28px rgba(15, 23, 42, 0.4)',
+              border: `1px solid ${getSeverityColor(incident.severity)}`
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '1rem' }}>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                  <div
-                    style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      backgroundColor: incident.status === 'Active' ? '#ef4444' : '#6b7280'
-                    }}
-                  />
-                  <h3 style={{ margin: 0 }}>{incident.title}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '1.15rem' }}>🚨</span>
+                  <h3 style={{ margin: 0, color: '#f8fafc' }}>{incident.title}</h3>
                   {getStatusBadge(incident.status)}
                   <span style={{
                     padding: '0.2rem 0.6rem',
                     borderRadius: '999px',
-                    backgroundColor: '#f3f4f6',
-                    color: '#374151',
+                    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                    color: '#f1f5f9',
                     fontSize: '0.8rem',
                     fontWeight: 600,
-                    textTransform: 'capitalize'
+                    textTransform: 'capitalize',
+                    border: `1px solid ${getSeverityColor(incident.severity)}`
                   }}>
                     {incident.severity}
                   </span>
                 </div>
-                <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-                  Service: {incident.serviceName}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '0.4rem',
+                  marginBottom: '0.7rem'
+                }}>
+                  <div style={{ color: '#93c5fd', fontSize: '0.86rem' }}>Service: <strong style={{ color: '#e2e8f0' }}>{incident.serviceName}</strong></div>
+                  <div style={{ color: '#93c5fd', fontSize: '0.86rem' }}>Started: <strong style={{ color: '#e2e8f0' }}>{formatKolkataTimestamp(incident.startTimeUtc)}</strong></div>
+                  <div style={{ color: '#93c5fd', fontSize: '0.86rem' }}>First Seen: <strong style={{ color: '#e2e8f0' }}>{formatKolkataTimestamp(incident.firstSeen)}</strong></div>
+                  <div style={{ color: '#93c5fd', fontSize: '0.86rem' }}>Last Seen: <strong style={{ color: '#e2e8f0' }}>{formatKolkataTimestamp(incident.lastSeen)}</strong></div>
                 </div>
-                <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-                  Start Time: {formatUtcTimestamp(incident.startTimeUtc)}
-                </div>
-                <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-                  First Seen: {formatUtcTimestamp(incident.firstSeen)} · Last Seen: {formatUtcTimestamp(incident.lastSeen)}
-                </div>
-                <div style={{ color: '#111827', fontSize: '0.88rem', marginBottom: '0.4rem' }}>
+                <div style={{ color: '#e2e8f0', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
                   Suggested Cause: {incident.suggestedCause || 'No cause suggestion available.'}
                 </div>
-                <div style={{ color: '#6b7280', fontSize: '0.82rem' }}>
+                <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>
                   Template: {incident.template}
                 </div>
               </div>
               <div
                 style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: '4px',
+                  padding: '0.65rem 0.8rem',
+                  backgroundColor: 'rgba(15, 23, 42, 0.72)',
+                  borderRadius: '10px',
                   textAlign: 'center',
-                  minWidth: '80px'
+                  minWidth: '112px',
+                  border: '1px solid rgba(148, 163, 184, 0.24)'
                 }}
               >
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>Errors</div>
+                <div style={{ fontSize: '0.79rem', color: '#94a3b8' }}>Errors</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#b91c1c' }}>{incident.errorCount}</div>
-                <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.35rem' }}>Warnings</div>
+                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.35rem' }}>Warnings</div>
                 <div style={{ fontSize: '1rem', fontWeight: 600, color: '#c2410c' }}>{incident.warningCount}</div>
               </div>
             </div>

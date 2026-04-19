@@ -140,21 +140,22 @@ namespace LogLens.Application.Services
             int projectionBuckets = 3,
             CancellationToken cancellationToken = default)
         {
-            var safeHistoryBuckets = 5;
+            var safeBucketMinutes = bucketMinutes > 0 ? bucketMinutes : AnalyticsTime.BucketMinutes;
+            var safeHistoryBuckets = historyBuckets > 0 ? historyBuckets : 5;
             var safeProjectionBuckets = Math.Clamp(projectionBuckets, 1, 12);
             var totalBuckets = safeHistoryBuckets + safeProjectionBuckets;
-            var currentWindowStart = AnalyticsTime.FloorToBucket(DateTime.UtcNow);
+            var currentWindowStart = FloorToBucket(DateTime.UtcNow, safeBucketMinutes);
             var cacheKey = $"prediction:{currentWindowStart.Ticks}:{safeProjectionBuckets}";
 
             return await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = MetricsCacheTtl;
 
-                var since = currentWindowStart.AddMinutes(-(AnalyticsTime.BucketMinutes * (safeHistoryBuckets - 1)));
+                var since = currentWindowStart.AddMinutes(-(safeBucketMinutes * (safeHistoryBuckets - 1)));
                 var errorLogs = await _logAnalyticsService.GetErrorLogsForWindowAsync(since, cancellationToken);
                 var buckets = _logAnalyticsService.BuildErrorBuckets(
                     errorLogs,
-                    AnalyticsTime.BucketMinutes,
+                    safeBucketMinutes,
                     safeHistoryBuckets,
                     currentWindowStart);
 
@@ -173,14 +174,14 @@ namespace LogLens.Application.Services
                 var previous = buckets.Count >= 2 ? buckets[^2].ErrorCount : 0;
                 var current = buckets.Count >= 1 ? buckets[^1].ErrorCount : 0;
                 var projectionStart = (buckets.LastOrDefault()?.BucketStartUtc ?? currentWindowStart)
-                    .AddMinutes(AnalyticsTime.BucketMinutes);
+                    .AddMinutes(safeBucketMinutes);
 
                 for (var i = 1; i <= safeProjectionBuckets; i++)
                 {
                     var projectedBase = current + (current - previous);
                     var noise = 1 + ((Random.Shared.NextDouble() * 0.10) - 0.05);
                     var predicted = Math.Max(0, (int)Math.Round(projectedBase * noise));
-                    var bucketStart = projectionStart.AddMinutes((i - 1) * AnalyticsTime.BucketMinutes);
+                    var bucketStart = projectionStart.AddMinutes((i - 1) * safeBucketMinutes);
 
                     results.Add(new ErrorTrendPointDto
                     {
@@ -196,6 +197,14 @@ namespace LogLens.Application.Services
 
                 return results;
             }) ?? new List<ErrorTrendPointDto>();
+        }
+
+        private static DateTime FloorToBucket(DateTime value, int bucketMinutes)
+        {
+            var utc = AnalyticsTime.NormalizeUtc(value);
+            var bucketTicks = TimeSpan.FromMinutes(bucketMinutes).Ticks;
+            var ticks = utc.Ticks - (utc.Ticks % bucketTicks);
+            return new DateTime(ticks, DateTimeKind.Utc);
         }
 
         private static (int RecentErrors, int PreviousErrors, double ErrorRateIncrease, double ServiceImpact, string AffectedService)

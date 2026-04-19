@@ -11,6 +11,7 @@ namespace LogLens.Application.Services
     public class IncidentClusteringApplicationService : IIncidentClusteringService
     {
         private static readonly TimeSpan IncidentWindow = TimeSpan.FromMinutes(10);
+        private const int MinLogsToCreateIncident = 5;
 
         private readonly ILogSanitizer _logSanitizer;
         private readonly IIncidentRepository _incidentRepository;
@@ -62,6 +63,12 @@ namespace LogLens.Application.Services
                     group.Key.Template,
                     group.Key.ServiceName,
                     minLastSeen);
+
+                // Prevent one-log incident noise: only open a new incident once a group has enough logs.
+                if (activeIncident == null && groupedLogs.Count < MinLogsToCreateIncident)
+                {
+                    continue;
+                }
 
                 if (activeIncident == null)
                 {

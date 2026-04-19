@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { fetchErrorTrendPrediction, formatUtcTimestamp } from '../services/api';
+import { fetchErrorTrendPrediction } from '../services/api';
 
 interface TrendPoint {
   t: string;
@@ -19,9 +19,19 @@ interface PredictionTooltipProps {
   active?: boolean;
   payload?: TooltipPayloadItem[];
   label?: string;
+  formatTimestamp: (timestamp: string) => string;
 }
 
-const PredictionTooltip: React.FC<PredictionTooltipProps> = ({ active, payload, label }) => {
+const defaultFormatTimestamp = (timestamp: string) => {
+  const value = new Date(timestamp);
+  if (Number.isNaN(value.getTime())) {
+    return '-';
+  }
+
+  return value.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+};
+
+const PredictionTooltip: React.FC<PredictionTooltipProps> = ({ active, payload, label, formatTimestamp }) => {
   if (!active || !payload || payload.length === 0) {
     return null;
   }
@@ -30,15 +40,15 @@ const PredictionTooltip: React.FC<PredictionTooltipProps> = ({ active, payload, 
 
   return (
     <div style={{
-      backgroundColor: '#ffffff',
-      border: '1px solid #e5e7eb',
-      borderRadius: '8px',
-      padding: '0.65rem 0.75rem',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.08)'
+      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      border: '1px solid rgba(148, 163, 184, 0.3)',
+      borderRadius: '10px',
+      padding: '0.75rem 0.8rem',
+      boxShadow: '0 14px 28px rgba(2, 6, 23, 0.45)'
     }}>
-      <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{ts ? formatUtcTimestamp(ts) : label}</div>
+      <div style={{ fontWeight: 700, marginBottom: '0.3rem', color: '#e2e8f0' }}>{ts ? formatTimestamp(ts) : label}</div>
       {payload.map((item) => (
-        <div key={item.name} style={{ color: item.name === 'predicted' ? '#64748b' : '#1e3a8a', fontSize: '0.9rem' }}>
+        <div key={item.name} style={{ color: item.name === 'predicted' ? '#94a3b8' : '#93c5fd', fontSize: '0.88rem' }}>
           {item.name === 'predicted'
             ? `Predicted: ${item.value} (Prediction based on recent trend)`
             : `Current: ${item.value}`}
@@ -48,7 +58,11 @@ const PredictionTooltip: React.FC<PredictionTooltipProps> = ({ active, payload, 
   );
 };
 
-const PredictionChartPlaceholder: React.FC = () => {
+interface PredictionChartPlaceholderProps {
+  formatTimestamp?: (timestamp: string) => string;
+}
+
+const PredictionChartPlaceholder: React.FC<PredictionChartPlaceholderProps> = ({ formatTimestamp = defaultFormatTimestamp }) => {
   const [points, setPoints] = useState<TrendPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +106,10 @@ const PredictionChartPlaceholder: React.FC = () => {
     };
   }, []);
 
-  const chartData = useMemo(() => points, [points]);
+  const chartData = useMemo(() => points.map((point) => ({
+    ...point,
+    t: formatTimestamp(point.rawTimestamp)
+  })), [points, formatTimestamp]);
 
   if (loading) {
     return <div>Loading prediction chart...</div>;
@@ -110,13 +127,14 @@ const PredictionChartPlaceholder: React.FC = () => {
     return (
       <div style={{
         padding: '1rem',
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        background: 'linear-gradient(145deg, rgba(30,41,59,0.85), rgba(15,23,42,0.96))',
+        borderRadius: '14px',
+        boxShadow: '0 10px 28px rgba(2,6,23,0.38)',
         marginBottom: '1.25rem',
-        color: '#6b7280'
+        border: '1px solid rgba(148,163,184,0.2)',
+        color: '#94a3b8'
       }}>
-        <h3 style={{ marginTop: 0 }}>Error Trend vs Predicted Trend</h3>
+        <h3 style={{ marginTop: 0, color: '#f8fafc' }}>Error Trend vs Predicted Trend</h3>
         No data available for trend analysis yet.
       </div>
     );
@@ -125,26 +143,27 @@ const PredictionChartPlaceholder: React.FC = () => {
   return (
     <div style={{
       padding: '1rem',
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      background: 'linear-gradient(145deg, rgba(30,41,59,0.85), rgba(15,23,42,0.96))',
+      borderRadius: '14px',
+      boxShadow: '0 10px 28px rgba(2,6,23,0.38)',
       marginBottom: '1.25rem'
     }}>
-      <h3 style={{ marginTop: 0 }}>Error Trend vs Predicted Trend</h3>
+      <h3 style={{ marginTop: 0, color: '#f8fafc' }}>Error Trend vs Predicted Trend</h3>
       <ResponsiveContainer width="100%" height={250}>
-        <AreaChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="t" />
-          <YAxis />
-          <Tooltip content={<PredictionTooltip />} />
-          <Area type="monotone" dataKey="current" stroke="#2563eb" fill="#bfdbfe" fillOpacity={0.55} />
+        <AreaChart data={chartData} margin={{ top: 8, right: 14, left: 2, bottom: 6 }}>
+          <CartesianGrid strokeDasharray="4 4" stroke="rgba(148, 163, 184, 0.24)" />
+          <XAxis dataKey="t" tick={{ fill: '#cbd5e1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'rgba(148, 163, 184, 0.25)' }} />
+          <YAxis tick={{ fill: '#cbd5e1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'rgba(148, 163, 184, 0.25)' }} />
+          <Tooltip content={<PredictionTooltip formatTimestamp={formatTimestamp} />} />
+          <Area type="natural" dataKey="current" stroke="#38bdf8" fill="#0ea5e9" fillOpacity={0.28} strokeWidth={2.2} activeDot={{ r: 4 }} />
           <Area
-            type="monotone"
+            type="natural"
             dataKey="predicted"
-            stroke="#94a3b8"
-            fill="#e2e8f0"
-            fillOpacity={0.35}
-            strokeDasharray="7 4"
+            stroke="#c084fc"
+            fill="#7c3aed"
+            fillOpacity={0.22}
+            strokeDasharray="8 4"
+            strokeWidth={2}
           />
         </AreaChart>
       </ResponsiveContainer>

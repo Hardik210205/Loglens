@@ -102,16 +102,11 @@ builder.Services.AddHostedService<MlProcessingService>();
 
 var app = builder.Build();
 
-// Apply migrations automatically, but do not crash startup when DB is temporarily unavailable.
-try
+// Apply migrations at startup and fail fast on DB issues.
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<LogLensDbContext>();
     db.Database.Migrate();
-}
-catch (Exception ex)
-{
-    Log.Warning(ex, "Database migration failed during startup. Running in degraded mode with endpoint fallbacks.");
 }
 
 // Swagger UI in development

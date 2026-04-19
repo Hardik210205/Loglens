@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
 using LogLens.Application.DTOs;
 using LogLens.Application.Interfaces;
 
@@ -9,9 +10,14 @@ namespace LogLens.API.Endpoints
 {
     public static class LogEndpoints
     {
+        private sealed class LogEndpointLoggerCategory { }
+
         public static void MapLogEndpoints(this WebApplication app)
         {
-            static Task<IResult> IngestAsync(IngestLogRequest log, ILogService logService)
+            static Task<IResult> IngestAsync(
+                IngestLogRequest log,
+                ILogService logService,
+                ILogger<LogEndpointLoggerCategory> logger)
             {
                 return ExecuteAsync();
 
@@ -22,9 +28,12 @@ namespace LogLens.API.Endpoints
                         await logService.EnqueueAsync(log);
                         return Results.Accepted();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        return Results.Accepted();
+                        logger.LogError(ex, "Failed to enqueue log for service {ServiceName}", log.ServiceName);
+                        return Results.Problem(
+                            detail: "Failed to ingest log entry.",
+                            statusCode: StatusCodes.Status500InternalServerError);
                     }
                 }
             }
@@ -218,12 +227,14 @@ namespace LogLens.API.Endpoints
             .WithName("GetErrorTrendPrediction")
             .WithTags("Insights");
 
-            app.MapGet("/api/stats/heatmap", async (ILogRepository logRepo) =>
+            app.MapGet("/api/stats/heatmap", async (ILogRepository logRepo, HttpContext httpContext) =>
             {
                 try
                 {
                     var since = DateTime.UtcNow.AddHours(-24);
-                    var counts = (await logRepo.GetLogCountsByHourAsync(since)) ?? Enumerable.Empty<(int Hour, int Errors, int Warnings, int Info)>();
+                    var requestedTimeZone = httpContext.Request.Headers["X-Timezone"].FirstOrDefault();
+                    var counts = (await logRepo.GetLogCountsByHourAsync(since, requestedTimeZone))
+                        ?? Enumerable.Empty<(int Hour, int Errors, int Warnings, int Info)>();
                     var dtos = counts.Select(c => new HeatmapResponseDto(
                         $"{c.Hour:D2}:00",
                         c.Errors,

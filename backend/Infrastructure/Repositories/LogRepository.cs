@@ -8,11 +8,18 @@ using LogLens.Domain.Entities;
 using LogLens.Domain.Enums;
 using LogLens.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.InteropServices;
 
 namespace LogLens.Infrastructure.Repositories
 {
     public class LogRepository : ILogRepository
     {
+        private sealed class LogProjection
+        {
+            public DateTime Timestamp { get; set; }
+            public LogLevel Level { get; set; }
+        }
+
         private readonly LogLensDbContext _context;
 
         public LogRepository(LogLensDbContext context)
@@ -58,23 +65,82 @@ namespace LogLens.Infrastructure.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<(int Hour, int Errors, int Warnings, int Info)>> GetLogCountsByHourAsync(DateTime since, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<(int Hour, int Errors, int Warnings, int Info)>> GetLogCountsByHourAsync(
+            DateTime since,
+            string? timeZoneId = null,
+            CancellationToken cancellationToken = default)
         {
             var logs = await _context.Logs
                 .Where(l => l.Timestamp >= since)
-                .Select(l => new { l.Timestamp, l.Level })
+                .Select(l => new LogProjection
+                {
+                    Timestamp = l.Timestamp,
+                    Level = l.Level
+                })
                 .ToListAsync(cancellationToken);
+
+            var timeZone = ResolveTimeZone(timeZoneId);
+
+            var groupedByHour = logs
+                .GroupBy(log =>
+                {
+                    var utcTimestamp = NormalizeUtc(log.Timestamp);
+                    var localTime = TimeZoneInfo.ConvertTimeFromUtc(utcTimestamp, timeZone);
+                    return localTime.Hour;
+                })
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             var result = new List<(int Hour, int Errors, int Warnings, int Info)>();
             for (var h = 0; h < 24; h++)
             {
-                var hourLogs = logs.Where(l => l.Timestamp.Hour == h).ToList();
+                var hourLogs = groupedByHour.TryGetValue(h, out var items)
+                    ? items
+                    : new List<LogProjection>();
                 var errors = hourLogs.Count(l => l.Level == LogLevel.Error || l.Level == LogLevel.Critical);
                 var warnings = hourLogs.Count(l => l.Level == LogLevel.Warning);
                 var info = hourLogs.Count(l => l.Level == LogLevel.Information || l.Level == LogLevel.Debug || l.Level == LogLevel.Trace);
                 result.Add((h, errors, warnings, info));
             }
-            return result;
+
+            return result.OrderBy(x => x.Hour);
+        }
+
+        private static TimeZoneInfo ResolveTimeZone(string? requestedTimeZoneId)
+        {
+            if (!string.IsNullOrWhiteSpace(requestedTimeZoneId))
+            {
+                try
+                {
+                    return TimeZoneInfo.FindSystemTimeZoneById(requestedTimeZoneId.Trim());
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                }
+                catch (InvalidTimeZoneException)
+                {
+                }
+            }
+
+            var tzId = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "India Standard Time"
+                : "Asia/Kolkata";
+
+            return TimeZoneInfo.FindSystemTimeZoneById(tzId);
+        }
+
+        private static DateTime NormalizeUtc(DateTime timestamp)
+        {
+            if (timestamp.Kind == DateTimeKind.Utc)
+            {
+                return timestamp;
+            }
+
+            if (timestamp.Kind == DateTimeKind.Unspecified)
+            {
+                return DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+            }
+
+            return timestamp.ToUniversalTime();
         }
     }
 }
