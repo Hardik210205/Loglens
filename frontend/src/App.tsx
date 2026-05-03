@@ -1,10 +1,17 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { createLogHubConnection } from './services/signalr';
 import { HubConnectionState } from '@microsoft/signalr';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
 const LiveLogs = React.lazy(() => import('./pages/LiveLogs'));
 const IncidentExplorer = React.lazy(() => import('./pages/IncidentExplorer'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
+const ServicesPage = React.lazy(() => import('./pages/admin/ServicesPage'));
+const UsersPage = React.lazy(() => import('./pages/admin/UsersPage'));
 
 interface RiskToast {
   id: string;
@@ -12,7 +19,8 @@ interface RiskToast {
   service: string;
 }
 
-const App: React.FC = () => {
+const AppShell: React.FC = () => {
+  const auth = useAuth();
   const [toasts, setToasts] = useState<RiskToast[]>([]);
 
   useEffect(() => {
@@ -76,23 +84,77 @@ const App: React.FC = () => {
   ), [toasts]);
 
   return (
-    <Router>
+    <>
       {toastContainer}
       <nav className="navbar">
         <div style={{ fontSize: '1.2rem', fontWeight: 700, marginRight: '2rem', letterSpacing: '0.06em' }}>LogLens</div>
-        <Link to="/">Live Logs</Link>
-        <Link to="/incidents">Incidents</Link>
-        <Link to="/dashboard">Dashboard</Link>
+        {auth.isAuthenticated ? (
+          <>
+            <Link to="/">Live Logs</Link>
+            <Link to="/incidents">Incidents</Link>
+            <Link to="/dashboard">Dashboard</Link>
+            {auth.isAdmin() && <Link to="/admin/services">Services</Link>}
+            {auth.isAdmin() && <Link to="/admin/users">Users</Link>}
+          </>
+        ) : (
+          <Link to="/login">Sign In</Link>
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {auth.user && (
+            <div style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>
+              {auth.user.email}
+            </div>
+          )}
+          {auth.isAuthenticated && (
+            <button
+              type="button"
+              onClick={auth.logout}
+              style={{
+                border: '1px solid rgba(148,163,184,0.25)',
+                background: 'rgba(30,41,59,0.96)',
+                color: '#e2e8f0',
+                borderRadius: '999px',
+                padding: '0.45rem 0.9rem',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              Logout
+            </button>
+          )}
+        </div>
       </nav>
       <div className="container">
         <Suspense fallback={<div>Loading...</div>}>
           <Routes>
-            <Route path="/" element={<LiveLogs />} />
-            <Route path="/incidents" element={<IncidentExplorer />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<LiveLogs />} />
+              <Route path="/incidents" element={<IncidentExplorer />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
+
+            <Route element={<ProtectedRoute requireAdmin />}>
+              <Route path="/admin/services" element={<ServicesPage />} />
+              <Route path="/admin/users" element={<UsersPage />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to={auth.isAuthenticated ? '/dashboard' : '/login'} replace />} />
           </Routes>
         </Suspense>
       </div>
+    </>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
     </Router>
   );
 };
