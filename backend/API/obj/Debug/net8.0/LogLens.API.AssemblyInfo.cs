@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LogLens.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44dffae03e7f9c0313e8e9fc13bc8a8275509401")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+234a6e83f9c7031ca8444904866c2f5fc8416db8")]
 [assembly: System.Reflection.AssemblyProductAttribute("LogLens.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LogLens.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -15,5 +15,7 @@ namespace LogLens.Domain.Entities
         public string? ClusterId { get; set; }
         public Guid? IncidentId { get; set; }
         public Incident? Incident { get; set; }
+        public Guid? ServiceId { get; set; }
+        public Service? Service { get; set; }
     }
 }

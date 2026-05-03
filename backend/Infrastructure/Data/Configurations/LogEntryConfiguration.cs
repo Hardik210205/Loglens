@@ -16,6 +16,11 @@ namespace LogLens.Infrastructure.Data.Configurations
             builder.Property(l => l.Metadata).HasMaxLength(4000);
             builder.Property(l => l.ClusterId).HasMaxLength(64);
 
+            builder.HasOne(l => l.Service)
+                .WithMany(s => s.Logs)
+                .HasForeignKey(l => l.ServiceId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // Add composite index for common queries (timestamp + level)
             builder.HasIndex(l => new { l.Timestamp, l.Level })
                 .HasDatabaseName("idx_logs_timestamp_level");
@@ -34,6 +39,9 @@ namespace LogLens.Infrastructure.Data.Configurations
 
             builder.HasIndex(l => l.IncidentId)
                 .HasDatabaseName("idx_logs_incidentid");
+
+            builder.HasIndex(l => l.ServiceId)
+                .HasDatabaseName("idx_logs_serviceid");
 
             // Table hint for columnstore (comment with guidance)
             // Note: This requires manual ALTER TABLE statement after migration:

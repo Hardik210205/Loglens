@@ -66,6 +66,52 @@ namespace LogLens.Infrastructure.Migrations
                     b.ToTable("alerts", (string)null);
                 });
 
+            modelBuilder.Entity("LogLens.Domain.Entities.ApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ServiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyPrefix")
+                        .HasDatabaseName("idx_api_keys_prefix");
+
+                    b.HasIndex("ServiceId", "IsActive")
+                        .HasDatabaseName("idx_api_keys_service_active");
+
+                    b.ToTable("api_keys", (string)null);
+                });
+
             modelBuilder.Entity("LogLens.Domain.Entities.Forecast", b =>
                 {
                     b.Property<Guid>("Id")
@@ -143,6 +189,9 @@ namespace LogLens.Infrastructure.Migrations
                     b.Property<Guid?>("IncidentId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ServiceId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -154,6 +203,10 @@ namespace LogLens.Infrastructure.Migrations
                     b.Property<string>("Metadata")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ClusterId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("ServiceName")
                         .IsRequired()
@@ -169,6 +222,9 @@ namespace LogLens.Infrastructure.Migrations
 
                     b.HasIndex("IncidentId");
 
+                    b.HasIndex("ServiceId")
+                        .HasDatabaseName("idx_logs_serviceid");
+
                     b.HasIndex("Level")
                         .HasDatabaseName("idx_logs_level");
 
@@ -180,6 +236,76 @@ namespace LogLens.Infrastructure.Migrations
                         .HasDatabaseName("idx_logs_timestamp_level");
 
                     b.ToTable("logs", (string)null);
+                });
+
+            modelBuilder.Entity("LogLens.Domain.Entities.Service", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ux_services_name");
+
+                    b.ToTable("services", (string)null);
+                });
+
+            modelBuilder.Entity("LogLens.Domain.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_email");
+
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("LogLens.Domain.Entities.Alert", b =>
@@ -197,6 +323,17 @@ namespace LogLens.Infrastructure.Migrations
                     b.Navigation("Incident");
                 });
 
+            modelBuilder.Entity("LogLens.Domain.Entities.ApiKey", b =>
+                {
+                    b.HasOne("LogLens.Domain.Entities.Service", "Service")
+                        .WithMany("ApiKeys")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+                });
+
             modelBuilder.Entity("LogLens.Domain.Entities.Forecast", b =>
                 {
                     b.HasOne("LogLens.Domain.Entities.Incident", "Incident")
@@ -211,11 +348,38 @@ namespace LogLens.Infrastructure.Migrations
                     b.HasOne("LogLens.Domain.Entities.Incident", null)
                         .WithMany("LogEntries")
                         .HasForeignKey("IncidentId");
+
+                    b.HasOne("LogLens.Domain.Entities.Service", "Service")
+                        .WithMany("Logs")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("LogLens.Domain.Entities.Service", b =>
+                {
+                    b.HasOne("LogLens.Domain.Entities.User", "CreatedBy")
+                        .WithMany("ServicesCreated")
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ApiKeys");
+
+                    b.Navigation("Logs");
                 });
 
             modelBuilder.Entity("LogLens.Domain.Entities.Incident", b =>
                 {
                     b.Navigation("LogEntries");
+                });
+
+            modelBuilder.Entity("LogLens.Domain.Entities.User", b =>
+                {
+                    b.Navigation("ServicesCreated");
                 });
 #pragma warning restore 612, 618
         }

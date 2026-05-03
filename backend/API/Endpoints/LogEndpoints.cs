@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using LogLens.Application.DTOs;
 using LogLens.Application.Interfaces;
+using LogLens.Domain.Entities;
+using DomainLogLevel = LogLens.Domain.Enums.LogLevel;
 
 namespace LogLens.API.Endpoints
 {
@@ -16,7 +18,8 @@ namespace LogLens.API.Endpoints
         {
             static Task<IResult> IngestAsync(
                 IngestLogRequest log,
-                ILogService logService,
+                HttpContext context,
+                ILogQueueService logQueueService,
                 ILogger<LogEndpointLoggerCategory> logger)
             {
                 return ExecuteAsync();
@@ -25,7 +28,29 @@ namespace LogLens.API.Endpoints
                 {
                     try
                     {
-                        await logService.EnqueueAsync(log);
+                        if (!context.Items.TryGetValue("ServiceId", out var serviceIdValue) || serviceIdValue is not Guid serviceId)
+                        {
+                            return Results.BadRequest(new { error = "Missing service context from middleware." });
+                        }
+
+                        if (!context.Items.TryGetValue("ServiceName", out var serviceNameValue) || serviceNameValue is not string serviceName || string.IsNullOrWhiteSpace(serviceName))
+                        {
+                            return Results.BadRequest(new { error = "Missing service context from middleware." });
+                        }
+
+                        var entry = new LogEntry
+                        {
+                            Timestamp = log.Timestamp == default ? DateTime.UtcNow : log.Timestamp,
+                            Level = Enum.TryParse<DomainLogLevel>(log.LogLevel, ignoreCase: true, out var parsedLevel)
+                                ? parsedLevel
+                                : DomainLogLevel.Information,
+                            Message = string.IsNullOrWhiteSpace(log.Message) ? "Log received" : log.Message.Trim(),
+                            ServiceName = serviceName,
+                            ServiceId = serviceId,
+                            TraceId = log.TraceId
+                        };
+
+                        await logQueueService.EnqueueAsync(entry);
                         return Results.Accepted();
                     }
                     catch (Exception ex)

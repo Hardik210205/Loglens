@@ -14,6 +14,9 @@ namespace LogLens.Infrastructure.Data
         public DbSet<Incident> Incidents { get; set; }
         public DbSet<Forecast> Forecasts { get; set; }
         public DbSet<Alert> Alerts { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Service> Services { get; set; }
+        public DbSet<ApiKey> ApiKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,6 +24,9 @@ namespace LogLens.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new IncidentConfiguration());
             modelBuilder.ApplyConfiguration(new ForecastConfiguration());
             modelBuilder.ApplyConfiguration(new AlertConfiguration());
+            modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new ServiceConfiguration());
+            modelBuilder.ApplyConfiguration(new ApiKeyConfiguration());
         }
     }
 }
